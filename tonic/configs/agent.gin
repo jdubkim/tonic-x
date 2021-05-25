@@ -14,5 +14,5 @@ train.name = None
 
 # Agent Configurations
 train.agent = @PPO()
-lp.activation = 'tanh
+mlp.activation = 'tanh'
 

@@ -69,6 +69,10 @@ def train(
 
 if __name__ == '__main__':
     # Argument parsing.
-    gin.parse_config_file("tonic/configs/config.gin")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', default="tonic/configs/agent.gin")
+    args = vars(parser.parse_args())
+
+    gin.parse_config_file(args['config'])
 
     train()
