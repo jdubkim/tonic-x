@@ -1,11 +1,12 @@
 '''Environment builders for popular domains.'''
-
+import gin
 import gym.wrappers
 import numpy as np
 
 from tonic import environments
 
 
+@gin.configurable
 def gym_environment(*args, **kwargs):
     '''Returns a wrapped Gym environment.'''
 
@@ -15,6 +16,7 @@ def gym_environment(*args, **kwargs):
     return build_environment(_builder, *args, **kwargs)
 
 
+@gin.configurable
 def bullet_environment(*args, **kwargs):
     '''Returns a wrapped PyBullet environment.'''
 
@@ -25,6 +27,7 @@ def bullet_environment(*args, **kwargs):
     return build_environment(_builder, *args, **kwargs)
 
 
+@gin.configurable
 def control_suite_environment(*args, **kwargs):
     '''Returns a wrapped Control Suite environment.'''
 

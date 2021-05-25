@@ -1,3 +1,4 @@
+import gin
 import numpy as np
 import torch
 
@@ -19,6 +20,7 @@ def assign_params_from_flat(new_params, params):
         p.data.copy_(p_new)
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class ConjugateGradient:
     def __init__(
         self, conjugate_gradient_steps=10, damping_coefficient=0.1,

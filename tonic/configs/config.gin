@@ -1,0 +1,18 @@
+include 'tonic/configs/environment.gin'
+
+import tonic.tensorflow.agents.ppo
+
+# Train Configurations
+train.header = "import tonic.tensorflow"
+train.trainer = @Trainer()
+train.before_training = None
+train.after_training = None
+train.sequential = 1
+train.parallel = 1
+train.seed = 0
+train.name = None
+
+# Agent Configurations
+train.agent = @PPO()
+lp.activation = 'tanh
+

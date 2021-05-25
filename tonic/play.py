@@ -158,7 +158,7 @@ def play(path, checkpoint, seed):
             checkpoint_path = None
 
     # Load the experiment configuration.
-    arguments_path = os.path.join(path, 'config.yaml')
+    arguments_path = os.path.join(path, 'configs.yaml')
     with open(arguments_path, 'r') as config_file:
         config = yaml.load(config_file, Loader=yaml.FullLoader)
     config = argparse.Namespace(**config)

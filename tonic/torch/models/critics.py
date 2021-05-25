@@ -1,6 +1,8 @@
+import gin
 import torch
 
 
+@gin.configurable(module='tonic.torch.models')
 class ValueHead(torch.nn.Module):
     def __init__(self, fn=None):
         super().__init__()
@@ -20,6 +22,7 @@ class ValueHead(torch.nn.Module):
         return out
 
 
+@gin.configurable(module='tonic.torch.models')
 class CategoricalWithSupport:
     def __init__(self, values, logits):
         self.values = values
@@ -46,6 +49,7 @@ class CategoricalWithSupport:
         return (delta_clipped * self.probabilities[:, None]).sum(dim=2)
 
 
+@gin.configurable(module='tonic.torch.models')
 class DistributionalValueHead(torch.nn.Module):
     def __init__(self, vmin, vmax, num_atoms, fn=None):
         super().__init__()
@@ -67,6 +71,7 @@ class DistributionalValueHead(torch.nn.Module):
         return CategoricalWithSupport(values=self.values, logits=logits)
 
 
+@gin.configurable(module='tonic.torch.models')
 class Critic(torch.nn.Module):
     def __init__(self, encoder, torso, head):
         super().__init__()

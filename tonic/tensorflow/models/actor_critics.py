@@ -1,8 +1,10 @@
 import copy
 
+import gin
 import tensorflow as tf
 
 
+@gin.configurable(module='tonic.tensorflow.models')
 class ActorCritic(tf.keras.Model):
     def __init__(
         self, actor, critic, observation_normalizer=None,
@@ -27,6 +29,7 @@ class ActorCritic(tf.keras.Model):
         self.critic(dummy_observations)
 
 
+@gin.configurable(module='tonic.tensorflow.models')
 class ActorCriticWithTargets(tf.keras.Model):
     def __init__(
         self, actor, critic, observation_normalizer=None,
@@ -77,6 +80,7 @@ class ActorCriticWithTargets(tf.keras.Model):
             t.assign((1 - self.target_coeff) * t + self.target_coeff * o)
 
 
+@gin.configurable(module='tonic.tensorflow.models')
 class ActorTwinCriticWithTargets(tf.keras.Model):
     def __init__(
         self, actor, critic, observation_normalizer=None,

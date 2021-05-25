@@ -3,9 +3,12 @@
 import argparse
 import os
 
+import gin
+
 import tonic
 
 
+@gin.configurable
 def train(
     header, agent, environment, trainer, before_training, after_training,
     parallel, sequential, seed, name
@@ -20,14 +23,14 @@ def train(
         exec(header)
 
     # Build the agent.
-    agent = eval(agent)
+    agent = agent
 
     # Build the train and test environments.
     _environment = environment
     environment = tonic.environments.distribute(
-        lambda: eval(_environment), parallel, sequential)
+        lambda: _environment, parallel, sequential)
     test_environment = tonic.environments.distribute(
-        lambda: eval(_environment))
+        lambda: _environment)
 
     # Choose a name for the experiment.
     if hasattr(test_environment, 'name'):
@@ -44,10 +47,10 @@ def train(
 
     # Initialize the logger to save data to the path environment/name/seed.
     path = os.path.join(environment_name, name, str(seed))
-    tonic.logger.initialize(path, script_path=__file__, config=args)
+    # tonic.logger.initialize(path, script_path=__file__, config=args)
 
     # Build the trainer.
-    trainer = eval(trainer)
+    trainer = trainer
     trainer.initialize(
         agent=agent, environment=environment,
         test_environment=test_environment, seed=seed)
@@ -66,16 +69,6 @@ def train(
 
 if __name__ == '__main__':
     # Argument parsing.
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--header')
-    parser.add_argument('--agent', required=True)
-    parser.add_argument('--environment', '--env', required=True)
-    parser.add_argument('--trainer', default='tonic.Trainer()')
-    parser.add_argument('--before_training')
-    parser.add_argument('--after_training')
-    parser.add_argument('--parallel', type=int, default=1)
-    parser.add_argument('--sequential', type=int, default=1)
-    parser.add_argument('--seed', type=int)
-    parser.add_argument('--name')
-    args = vars(parser.parse_args())
-    train(**args)
+    gin.parse_config_file("tonic/configs/config.gin")
+
+    train()

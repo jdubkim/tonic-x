@@ -1,3 +1,4 @@
+import gin
 import torch
 
 from tonic import logger  # noqa
@@ -17,6 +18,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
+@gin.configurable(module='tonic.torch.agents')
 class TD3(agents.DDPG):
     '''Twin Delayed Deep Deterministic Policy Gradient.
     TD3: https://arxiv.org/pdf/1802.09477.pdf

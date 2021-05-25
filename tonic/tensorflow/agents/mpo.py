@@ -1,3 +1,4 @@
+import gin
 import tensorflow as tf
 
 from tonic import logger, replays
@@ -17,6 +18,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
+@gin.configurable(module='tonic.tensorflow.agents')
 class MPO(agents.Agent):
     '''Maximum a Posteriori Policy Optimisation.
     MPO: https://arxiv.org/pdf/1806.06920.pdf

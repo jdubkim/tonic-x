@@ -1,8 +1,10 @@
+import gin
 import torch
 
 from tonic.torch import models, updaters  # noqa
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class VRegression:
     def __init__(self, loss=None, optimizer=None, gradient_clip=0):
         self.loss = loss or torch.nn.MSELoss()
@@ -28,6 +30,7 @@ class VRegression:
         return dict(loss=loss.detach(), v=values.detach())
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class QRegression:
     def __init__(self, loss=None, optimizer=None, gradient_clip=0):
         self.loss = loss or torch.nn.MSELoss()
@@ -53,6 +56,7 @@ class QRegression:
         return dict(loss=loss.detach(), q=values.detach())
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class DeterministicQLearning:
     def __init__(self, loss=None, optimizer=None, gradient_clip=0):
         self.loss = loss or torch.nn.MSELoss()
@@ -86,6 +90,7 @@ class DeterministicQLearning:
         return dict(loss=loss.detach(), q=values.detach())
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class DistributionalDeterministicQLearning:
     def __init__(self, optimizer=None, gradient_clip=0):
         self.optimizer = optimizer or (
@@ -122,6 +127,7 @@ class DistributionalDeterministicQLearning:
         return dict(loss=loss.detach())
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class TargetActionNoise:
     def __init__(self, scale=0.2, clip=0.5):
         self.scale = scale
@@ -182,6 +188,7 @@ class TwinCriticDeterministicQLearning:
             loss=loss.detach(), q1=values_1.detach(), q2=values_2.detach())
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class TwinCriticSoftQLearning:
     def __init__(
         self, loss=None, optimizer=None, entropy_coeff=0.2, gradient_clip=0
@@ -235,6 +242,7 @@ class TwinCriticSoftQLearning:
             loss=loss.detach(), q1=values_1.detach(), q2=values_2.detach())
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class ExpectedSARSA:
     def __init__(
         self, num_samples=20, loss=None, optimizer=None, gradient_clip=0

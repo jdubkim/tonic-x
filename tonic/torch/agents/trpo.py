@@ -1,9 +1,11 @@
+import gin
 import torch
 
 from tonic import logger  # noqa
 from tonic.torch import agents, updaters
 
 
+@gin.configurable(module='tonic.torch.agents')
 class TRPO(agents.A2C):
     '''Trust Region Policy Optimization.
     TRPO: https://arxiv.org/pdf/1502.05477.pdf

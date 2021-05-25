@@ -1,9 +1,11 @@
+import gin
 import torch
 
 from tonic import logger  # noqa
 from tonic.torch import agents, updaters
 
 
+@gin.configurable(module='tonic.torch.agents')
 class PPO(agents.A2C):
     '''Proximal Policy Optimization.
     PPO: https://arxiv.org/pdf/1707.06347.pdf

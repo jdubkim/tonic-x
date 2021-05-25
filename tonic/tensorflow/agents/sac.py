@@ -1,3 +1,4 @@
+import gin
 import tensorflow as tf
 
 from tonic import explorations
@@ -19,6 +20,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
+@gin.configurable(module='tonic.tensorflow.agents')
 class SAC(agents.DDPG):
     '''Soft Actor-Critic.
     SAC: https://arxiv.org/pdf/1801.01290.pdf

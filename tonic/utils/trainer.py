@@ -1,11 +1,13 @@
 import os
 import time
 
+import gin
 import numpy as np
 
 from tonic import logger
 
 
+@gin.configurable
 class Trainer:
     '''Trainer used to train and evaluate an agent on an environment.'''
 

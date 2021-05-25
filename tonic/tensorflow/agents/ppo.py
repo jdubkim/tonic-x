@@ -1,9 +1,11 @@
+import gin
 import tensorflow as tf
 
 from tonic import logger
 from tonic.tensorflow import agents, updaters
 
 
+@gin.configurable(module='tonic.tensorflow.agents')
 class PPO(agents.A2C):
     '''Proximal Policy Optimization.
     PPO: https://arxiv.org/pdf/1707.06347.pdf

@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 
+@gin.configurable(module='tonic.torch.normalizers')
 class Return(torch.nn.Module):
     def __init__(self, discount_factor):
         super().__init__()

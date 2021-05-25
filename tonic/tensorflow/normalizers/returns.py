@@ -1,7 +1,9 @@
+import gin
 import numpy as np
 import tensorflow as tf
 
 
+@gin.configurable(module='tonic.tensorflow.normalizers')
 class Return(tf.keras.Model):
     def __init__(self, discount_factor):
         super().__init__(name='reward_normalizer')
