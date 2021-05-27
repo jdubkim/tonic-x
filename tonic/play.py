@@ -3,6 +3,7 @@
 import argparse
 import os
 
+import gin
 import numpy as np
 import yaml
 
@@ -158,16 +159,12 @@ def play(path, checkpoint, seed):
             checkpoint_path = None
 
     # Load the experiment configuration.
-    arguments_path = os.path.join(path, 'configs.yaml')
-    with open(arguments_path, 'r') as config_file:
-        config = yaml.load(config_file, Loader=yaml.FullLoader)
-    config = argparse.Namespace(**config)
+    config_file_path = os.path.join(path, 'configs.gin')
+    gin.parse_config_file(config_file_path)
 
-    # Run the header first, e.g. to load an ML framework.
-    if config.header:
-        exec(config.header)
 
     # Build the agent.
+    agent = gin.config_str()
     agent = eval(config.agent)
 
     # Build the environment.

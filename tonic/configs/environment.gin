@@ -1,2 +1,2 @@
-train.environment = @bullet_environment()
-bullet_environment.name = 'AntBulletEnv-v0'
+train.environment = @train/bullet_environment()
+train/bullet_environment.name = 'AntBulletEnv-v0'

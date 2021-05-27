@@ -1,9 +1,9 @@
 include 'tonic/configs/environment.gin'
 
+import tonic.tensorflow
 import tonic.tensorflow.agents.ppo
 
 # Train Configurations
-train.header = "import tonic.tensorflow"
 train.trainer = @Trainer()
 train.before_training = None
 train.after_training = None

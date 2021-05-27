@@ -37,9 +37,10 @@ class Logger:
                 os.makedirs(self.path, exist_ok=True)
             except Exception:
                 pass
-            config_path = os.path.join(self.path, 'configs.yaml')
+            config_path = os.path.join(self.path, 'configs.gin')
             with open(config_path, 'w') as config_file:
-                yaml.dump(config, config_file)
+                config_file.write(config)
+                print(config)
             log(f'Config file saved to {config_path}')
 
         self.known_keys = set()
