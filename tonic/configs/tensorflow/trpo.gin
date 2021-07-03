@@ -1,0 +1,27 @@
+import gin.tf.external_configurables
+
+import tonic.tensorflow
+
+# Train Configurations
+Config.agent = @TRPO()
+Config.trainer = @Trainer()
+Config.before_training = None
+Config.after_training = None
+Config.sequential = 1
+Config.parallel = 1
+Config.seed = 10
+Config.name = None
+
+# Environment Configuration
+Config.environment = "tonic.environments.Bullet('AntBulletEnv-v0')"
+
+# Agent Configurations
+TRPO.replay = @Segment()
+TRPO.actor_updater = @TrustRegionPolicyGradient()
+TRPO.critic_updater = @VRegression()
+VRegression.optimizer = @tf.keras.optimizers.Adam()
+tf.keras.optimizers.Adam.lr = 1e-3
+tf.keras.optimizers.Adam.epsilon = 1e-8
+
+mlp.units = (64, 64)
+mlp.activation = 'tanh'

@@ -28,10 +28,9 @@ class A2C(agents.Agent):
         self, model=None, replay=None, actor_updater=None, critic_updater=None
     ):
         self.model = model or default_model()
-        self.replay = replay or replays.Segment()
-        self.actor_updater = actor_updater or \
-            updaters.StochasticPolicyGradient()
-        self.critic_updater = critic_updater or updaters.VRegression()
+        self.replay = replay
+        self.actor_updater = actor_updater
+        self.critic_updater = critic_updater
 
     def initialize(self, observation_space, action_space, seed=None):
         super().initialize(seed=seed)

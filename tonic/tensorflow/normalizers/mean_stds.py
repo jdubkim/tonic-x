@@ -1,7 +1,9 @@
+import gin
 import numpy as np
 import tensorflow as tf
 
 
+@gin.configurable(module='tonic.tensorflow.normalizers')
 class MeanStd(tf.keras.Model):
     def __init__(self, mean=0, std=1, clip=None, shape=None):
         super().__init__(name='global_mean_std')

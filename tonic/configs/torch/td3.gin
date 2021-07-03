@@ -1,0 +1,25 @@
+import gin.torch.external_configurables
+
+import tonic.torch
+
+# Train Configurations
+Config.agent = @TD3()
+Config.trainer = @Trainer()
+Config.before_training = None
+Config.after_training = None
+Config.sequential = 1
+Config.parallel = 1
+Config.seed = 10
+Config.name = None
+
+# Environment Configurations
+Config.environment = "tonic.environments.Bullet('AntBulletEnv-v0')"
+
+# Agent Configurations
+TD3.replay = @Buffer()
+TD3.exploration = @NormalActionNoise()
+TD3.actor_updater = @DeterministicPolicyGradient()
+TD3.critic_updater = @TwinCriticDeterministicQLearning()
+
+MLP.sizes = (256, 256)
+MLP.activation = 'relu'

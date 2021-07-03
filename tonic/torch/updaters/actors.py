@@ -274,6 +274,7 @@ class TwinCriticSoftDeterministicPolicyGradient:
         return dict(loss=loss.detach())
 
 
+@gin.configurable(module='tonic.torch.updaters')
 class MaximumAPosterioriPolicyOptimization:
     def __init__(
         self, num_samples=20, epsilon=1e-1, epsilon_penalty=1e-3,

@@ -5,9 +5,9 @@ import os
 
 import gin
 import numpy as np
-import yaml
 
 import tonic  # noqa
+from tonic.configs import Config
 
 
 def play_gym(agent, environment):
@@ -161,11 +161,10 @@ def play(path, checkpoint, seed):
     # Load the experiment configuration.
     config_file_path = os.path.join(path, 'configs.gin')
     gin.parse_config_file(config_file_path)
-
+    config = Config()
 
     # Build the agent.
-    agent = gin.config_str()
-    agent = eval(config.agent)
+    agent = config.agent
 
     # Build the environment.
     environment = eval(config.environment)

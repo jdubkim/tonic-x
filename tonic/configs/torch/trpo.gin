@@ -1,0 +1,24 @@
+import gin.torch.external_configurables
+
+import tonic.torch
+
+# Train Configurations
+Config.agent = @TRPO()
+Config.trainer = @Trainer()
+Config.before_training = None
+Config.after_training = None
+Config.sequential = 1
+Config.parallel = 1
+Config.seed = 10
+Config.name = None
+
+# Environment Configuration
+Config.environment = "tonic.environments.Bullet('AntBulletEnv-v0')"
+
+# Agent Configurations
+TRPO.replay = @Segment()
+TRPO.actor_updater = @TrustRegionPolicyGradient()
+TRPO.critic_updater = @VRegression()
+
+MLP.sizes = (64, 64)
+MLP.activation = 'tanh'
