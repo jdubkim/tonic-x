@@ -1,5 +1,6 @@
 import gin
 
+
 @gin.configurable
 class Config(object):
     """ Configuration for training and playing an agent """
@@ -8,9 +9,5 @@ class Config(object):
         self.agent = agent
         self.environment = environment
         self.trainer = trainer
-        self.before_training = before_training
-        self.after_training = after_training
-        self.parallel = parallel
-        self.sequential = sequential
         self.seed = seed
         self.name = name

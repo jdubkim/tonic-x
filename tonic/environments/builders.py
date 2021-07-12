@@ -7,7 +7,7 @@ from tonic import environments
 
 
 @gin.configurable
-def gym_environment(*args, **kwargs):
+def Gym(*args, **kwargs): # noqa
     '''Returns a wrapped Gym environment.'''
 
     def _builder(*args, **kwargs):
@@ -17,7 +17,7 @@ def gym_environment(*args, **kwargs):
 
 
 @gin.configurable
-def bullet_environment(*args, **kwargs):
+def Bullet(*args, **kwargs): # noqa
     '''Returns a wrapped PyBullet environment.'''
 
     def _builder(*args, **kwargs):
@@ -28,7 +28,7 @@ def bullet_environment(*args, **kwargs):
 
 
 @gin.configurable
-def control_suite_environment(*args, **kwargs):
+def ControlSuite(*args, **kwargs): # noqa
     '''Returns a wrapped Control Suite environment.'''
 
     def _builder(name, *args, **kwargs):
@@ -137,9 +137,3 @@ class ControlSuiteEnvironment(gym.core.Env):
         assert mode == 'rgb_array'
         return self.environment.physics.render(
             height=height, width=width, camera_id=camera_id)
-
-
-# Aliases.
-Gym = gym_environment
-Bullet = bullet_environment
-ControlSuite = control_suite_environment

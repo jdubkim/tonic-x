@@ -1,13 +1,10 @@
 '''Script used to train agents.'''
 
-import argparse
-import os
-
 from absl import app, flags
 import gin
 
 import tonic
-from tonic.configs import Config
+from tonic.utils.util import get_agent
 
 
 flags.DEFINE_multi_string(
@@ -23,56 +20,40 @@ flags.DEFINE_multi_string(
 FLAGS = flags.FLAGS
 
 
-def train(config):
+@gin.configurable
+def train(agent, trainer, before_training, after_training,
+          parallel, sequential):
     '''Trains an agent on an environment.'''
 
-    # Capture the arguments to save them, e.g. to play with the trained agent.
-    args = dict(locals())
-
     # Build the agent.
-    agent = config.agent
+    agent = agent
 
     # Build the train and test environments.
-    _environment = config.environment
-    environment = tonic.environments.distribute(
-        lambda: eval(_environment), config.parallel, config.sequential)
-    test_environment = tonic.environments.distribute(
-        lambda: eval(_environment))
-
-    # Choose a name for the experiment.
-    if hasattr(test_environment, 'name'):
-        environment_name = test_environment.name
-    else:
-        environment_name = test_environment.__class__.__name__
-    if not config.name:
-        if hasattr(agent, 'name'):
-            name = agent.name
-        else:
-            name = agent.__class__.__name__
-        if config.parallel != 1 or config.sequential != 1:
-            name += f'-{config.parallel}x{config.sequential}'
+    environment = tonic.environments.Environment(worker_groups=parallel,
+                                                 workers_per_group=sequential)
+    test_environment = tonic.environments.Environment()
 
     # Initialize the logger to save data to the path environment/name/seed.
-    path = os.path.join(environment_name, name, str(config.seed))
-    tonic.logger.initialize(path, script_path=__file__,
+    tonic.logger.initialize(script_path=__file__,
                             config=gin.config_str())
 
     # Build the trainer.
-    trainer = config.trainer
     trainer.initialize(
         agent=agent, environment=environment,
-        test_environment=test_environment, seed=config.seed)
+        test_environment=test_environment)
 
     # Run some code before training.
-    if config.before_training:
-        exec(config.before_training)
+    if before_training:
+        exec(compile(open(before_training).read(), before_training, 'exec'))
+        # os.system('python ' + before_training)
 
     # Train.
     trainer.run()
 
     # Run some code after training.
-    if config.after_training:
-        exec(config.after_training)
+    if after_training:
+        exec(compile(open(after_training).read(), before_training, 'exec'))
+        # os.system('python ' + after_training)
 
 
 def main(argv):
@@ -80,9 +61,7 @@ def main(argv):
     gin_param = FLAGS.gin_param
 
     gin.parse_config_files_and_bindings(gin_file, gin_param)
-    # configs = gin.config_str()
-    config = Config()
-    train(config)
+    train()
 
 
 if __name__ == '__main__':

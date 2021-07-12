@@ -7,13 +7,12 @@ import gin
 import numpy as np
 
 import tonic  # noqa
-from tonic.configs import Config
+import tonic.train
+from tonic.utils.util import get_agent
 
 
 def play_gym(agent, environment):
     '''Launches an agent in a Gym-based environment.'''
-
-    environment = tonic.environments.distribute(lambda: environment)
 
     observations = environment.start()
     environment.render()
@@ -113,6 +112,7 @@ def play_control_suite(agent, environment):
     viewer.launch(environment, policy)
 
 
+@gin.configurable
 def play(path, checkpoint, seed):
     '''Reloads an agent and an environment from a previous experiment.'''
 
@@ -159,16 +159,15 @@ def play(path, checkpoint, seed):
             checkpoint_path = None
 
     # Load the experiment configuration.
-    config_file_path = os.path.join(path, 'configs.gin')
+    config_file_path = os.path.join(path, 'config.gin')
     gin.parse_config_file(config_file_path)
-    config = Config()
 
-    # Build the agent.
-    agent = config.agent
+    # Build the agent
+    agent, agent_name = get_agent()
 
-    # Build the environment.
-    environment = eval(config.environment)
-    environment.seed(seed)
+    # Build the environment
+    environment = tonic.environments.Environment()
+    environment.initialize(seed)
 
     # Initialize the agent.
     agent.initialize(
@@ -179,13 +178,15 @@ def play(path, checkpoint, seed):
     if checkpoint_path:
         agent.load(checkpoint_path)
 
+    environment.render()
+    play_gym(agent, environment)
     # Play with the agent in the environment.
-    if 'ControlSuite' in config.environment:
-        play_control_suite(agent, environment)
-    else:
-        if 'Bullet' in config.environment:
-            environment.render()
-        play_gym(agent, environment)
+    # if environment.environments[0].env_type == 'ControlSuite':
+    #     play_control_suite(agent, environment)
+    # else:
+    #     if environment.environments[0].env_type == 'Bullet':
+    #         environment.render()
+    #     play_gym(agent, environment)
 
 
 if __name__ == '__main__':

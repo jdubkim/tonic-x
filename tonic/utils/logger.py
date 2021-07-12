@@ -3,19 +3,31 @@ import datetime
 import os
 import time
 
+import gin
 import numpy as np
 import termcolor
-import yaml
 
+from tonic.utils.util import get_agent
 
 current_logger = None
 
 
+@gin.configurable
 class Logger:
     '''Logger used to display and save logs, and save experiment configs.'''
 
     def __init__(self, path=None, width=60, script_path=None, config=None):
-        self.path = path or str(time.time())
+
+        if path is not None:
+            env_name, name, seed, sequential, parallel = path
+            if not name:
+                _, name = get_agent()
+            if name and (parallel != 1 or sequential != 1):
+                name += f'-{parallel}x{sequential}'
+            self.path = os.path.join(env_name, name, str(seed))
+        else:
+            self.path = str(time.time())
+
         self.log_file_path = os.path.join(self.path, 'log.csv')
 
         # Save the launch script.
@@ -37,7 +49,7 @@ class Logger:
                 os.makedirs(self.path, exist_ok=True)
             except Exception:
                 pass
-            config_path = os.path.join(self.path, 'configs.gin')
+            config_path = os.path.join(self.path, 'config.gin')
             with open(config_path, 'w') as config_file:
                 config_file.write(config)
                 print(config)

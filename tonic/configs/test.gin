@@ -1,0 +1,28 @@
+import tonic
+
+# Train Configurations
+train.trainer = @Trainer()
+train.before_training = None
+train.after_training = None
+
+AGENT = @agent/singleton()
+agent/singleton.constructor = @NormalRandom
+agent_name = None
+sequential = 2
+parallel = 1
+seed = 10
+
+# Environment Configuration
+environment_name = 'AntBulletEnv-v0'
+environment.builder = @Bullet
+Bullet.name = %environment_name
+
+# Macros Setting
+train.agent = %AGENT
+train.sequential = %sequential
+train.parallel = %parallel
+initialize.seed = %seed
+get_agent.agent = %AGENT
+get_agent.name = %agent_name
+
+Logger.path = [%environment_name, %agent_name, %seed, %sequential, %parallel]
