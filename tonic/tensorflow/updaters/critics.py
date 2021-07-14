@@ -4,7 +4,7 @@ import tensorflow as tf
 from tonic.tensorflow import updaters
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class VRegression:
     def __init__(self, loss=None, optimizer=None, gradient_clip=0):
         self.loss = loss or tf.keras.losses.MeanSquaredError()
@@ -31,7 +31,7 @@ class VRegression:
         return dict(loss=loss, v=values)
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class QRegression:
     def __init__(self, loss=None, optimizer=None, gradient_clip=0):
         self.loss = loss or tf.keras.losses.MeanSquaredError()
@@ -58,7 +58,7 @@ class QRegression:
         return dict(loss=loss, q=values)
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class DeterministicQLearning:
     def __init__(self, loss=None, optimizer=None, gradient_clip=0):
         self.loss = loss or tf.keras.losses.MeanSquaredError()
@@ -91,7 +91,7 @@ class DeterministicQLearning:
         return dict(loss=loss, q=values)
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class DistributionalDeterministicQLearning:
     def __init__(self, optimizer=None, gradient_clip=0):
         self.optimizer = optimizer or \
@@ -129,7 +129,7 @@ class DistributionalDeterministicQLearning:
         return dict(loss=loss)
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class TargetActionNoise:
     def __init__(self, scale=0.2, clip=0.5):
         self.scale = scale
@@ -142,7 +142,7 @@ class TargetActionNoise:
         return tf.clip_by_value(actions, -1, 1)
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class TwinCriticDeterministicQLearning:
     def __init__(
         self, loss=None, optimizer=None, target_action_noise=None,
@@ -190,7 +190,7 @@ class TwinCriticDeterministicQLearning:
         return dict(loss=loss, q1=values_1, q2=values_2)
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class TwinCriticSoftQLearning:
     def __init__(
         self, loss=None, optimizer=None, entropy_coeff=0.2, gradient_clip=0
@@ -242,7 +242,7 @@ class TwinCriticSoftQLearning:
         return dict(loss=loss, q1=values_1, q2=values_2)
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class ExpectedSARSA:
     def __init__(
         self, num_samples=20, loss=None, optimizer=None, gradient_clip=0

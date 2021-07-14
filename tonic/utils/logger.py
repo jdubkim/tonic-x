@@ -7,7 +7,6 @@ import gin
 import numpy as np
 import termcolor
 
-from tonic.utils.util import get_agent
 
 current_logger = None
 
@@ -19,11 +18,18 @@ class Logger:
     def __init__(self, path=None, width=60, script_path=None, config=None):
 
         if path is not None:
-            env_name, name, seed, sequential, parallel = path
+            print(path)
+            env_name, agent, name, seed, sequential, parallel = path
+
             if not name:
-                _, name = get_agent()
+                if hasattr(agent, 'name'):
+                    name = agent.name
+                else:
+                    name = agent.__class__.__name__
+
             if name and (parallel != 1 or sequential != 1):
                 name += f'-{parallel}x{sequential}'
+
             self.path = os.path.join(env_name, name, str(seed))
         else:
             self.path = str(time.time())
@@ -180,8 +186,8 @@ class Logger:
         self.last_epoch_time = time.time()
 
     def show_progress(
-        self, steps, num_epoch_steps, num_steps, color='white',
-        on_color='on_blue'
+            self, steps, num_epoch_steps, num_steps, color='white',
+            on_color='on_blue'
     ):
         '''Shows a progress bar for the current epoch and total training.'''
 

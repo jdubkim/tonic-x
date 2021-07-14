@@ -4,7 +4,7 @@ import gin
 import numpy as np
 
 
-@gin.configurable(module='tonic.explorations')
+@gin.configurable
 class NoActionNoise:
     def __init__(self, start_steps=20000):
         self.start_steps = start_steps
@@ -27,7 +27,7 @@ class NoActionNoise:
         pass
 
 
-@gin.configurable(module='tonic.explorations')
+@gin.configurable
 class NormalActionNoise:
     def __init__(self, scale=0.1, start_steps=20000):
         self.scale = scale
@@ -53,7 +53,7 @@ class NormalActionNoise:
         pass
 
 
-@gin.configurable(module='tonic.explorations')
+@gin.configurable
 class OrnsteinUhlenbeckActionNoise:
     def __init__(
         self, scale=0.1, clip=2, theta=.15, dt=1e-2, start_steps=20000

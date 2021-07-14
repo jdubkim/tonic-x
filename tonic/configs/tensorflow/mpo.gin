@@ -2,18 +2,20 @@ import gin.tf.external_configurables
 
 import tonic.tensorflow
 
-# Train Configurations
-Config.agent = @MPO()
-Config.trainer = @Trainer()
-Config.before_training = None
-Config.after_training = None
-Config.sequential = 1
-Config.parallel = 1
-Config.seed = 10
-Config.name = None
+# Train Settings
+AGENT = @MPO()
+ENVIRONMENT = @Bullet
+Bullet.name = %environment_name
+environment_name = 'AntBulletEnv-v0'
 
-# Environment Configuration
-Config.environment = "tonic.environments.Bullet('AntBulletEnv-v0')"
+trainer = @Trainer()
+NAME = None
+sequential = 1
+parallel = 1
+seed = 10
+
+before_training = None
+after_training = None
 
 # Agent Configurations
 MPO.replay = @Buffer()
@@ -23,3 +25,7 @@ MPO.critic_updater = @ExpectedSARSA()
 
 mlp.units = (256, 256)
 mlp.activation = 'relu'
+
+# Macros
+initialize.seed = %seed
+Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

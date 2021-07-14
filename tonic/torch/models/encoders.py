@@ -2,7 +2,7 @@ import gin
 import torch
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class ObservationEncoder(torch.nn.Module):
     def initialize(
         self, observation_space, action_space=None,
@@ -18,7 +18,7 @@ class ObservationEncoder(torch.nn.Module):
         return observations
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class ObservationActionEncoder(torch.nn.Module):
     def initialize(
         self, observation_space, action_space, observation_normalizer=None

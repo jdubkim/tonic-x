@@ -10,7 +10,7 @@ def default_dense_kwargs():
             scale=1 / 3, mode='fan_in', distribution='uniform'))
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 def mlp(units, activation, dense_kwargs=None):
     if dense_kwargs is None:
         dense_kwargs = default_dense_kwargs()

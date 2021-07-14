@@ -1,0 +1,2 @@
+load_config.agent = %AGENT
+load_config.environment = %ENVIRONMENT

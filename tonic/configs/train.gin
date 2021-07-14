@@ -1,0 +1,7 @@
+train.agent = %AGENT
+train.trainer = %trainer
+train.environment = %ENVIRONMENT
+train.before_training = %before_training
+train.after_training = %after_training
+train.sequential = %sequential
+train.parallel = %parallel

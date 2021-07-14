@@ -6,7 +6,7 @@ import torch
 from tonic.torch import models  # noqa
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class ActorCritic(torch.nn.Module):
     def __init__(
         self, actor, critic, observation_normalizer=None,
@@ -28,7 +28,7 @@ class ActorCritic(torch.nn.Module):
             self.return_normalizer)
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class ActorCriticWithTargets(torch.nn.Module):
     def __init__(
         self, actor, critic, observation_normalizer=None,
@@ -75,7 +75,7 @@ class ActorCriticWithTargets(torch.nn.Module):
                 t.data.add_(self.target_coeff * o.data)
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class ActorTwinCriticWithTargets(torch.nn.Module):
     def __init__(
         self, actor, critic, observation_normalizer=None,

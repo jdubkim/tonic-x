@@ -16,10 +16,6 @@ class Sequential:
         self.action_space = self.environments[0].action_space
         self.name = self.environments[0].name
 
-        curr = self.environments[0]
-        for env in self.environments[1:]:
-            print("Are they same objects? ", curr is env)
-
     def initialize(self, seed):
         for i, environment in enumerate(self.environments):
             environment.seed(seed + i)
@@ -164,7 +160,6 @@ class Parallel:
 def environment(builder, worker_groups=1, workers_per_group=1):
     '''Distributes workers over parallel and sequential groups.'''
     dummy_environment = builder()
-    print("debug: ", builder)
     max_episode_steps = dummy_environment.max_episode_steps
     del dummy_environment
 

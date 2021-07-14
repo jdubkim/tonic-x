@@ -18,7 +18,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
-@gin.configurable(module='tonic.tensorflow.agents')
+@gin.configurable
 class A2C(agents.Agent):
     '''Advantage Actor Critic (aka Vanilla Policy Gradient).
     A3C: https://arxiv.org/pdf/1602.01783.pdf

@@ -35,7 +35,7 @@ class SquashedMultivariateNormalDiag:
         return tf.tanh(self._distribution.mode())
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class DetachedScaleGaussianPolicyHead(tf.keras.Model):
     def __init__(
         self, loc_activation='tanh', dense_loc_kwargs=None, log_scale_init=0.,
@@ -67,7 +67,7 @@ class DetachedScaleGaussianPolicyHead(tf.keras.Model):
         return self.distribution(loc, scale)
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class GaussianPolicyHead(tf.keras.Model):
     def __init__(
         self, loc_activation='tanh', dense_loc_kwargs=None,
@@ -101,7 +101,7 @@ class GaussianPolicyHead(tf.keras.Model):
         return self.distribution(loc, scale)
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class DeterministicPolicyHead(tf.keras.Model):
     def __init__(self, activation='tanh', dense_kwargs=None):
         super().__init__()
@@ -118,7 +118,7 @@ class DeterministicPolicyHead(tf.keras.Model):
         return self.action_layer(inputs)
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class Actor(tf.keras.Model):
     def __init__(self, encoder, torso, head):
         super().__init__()

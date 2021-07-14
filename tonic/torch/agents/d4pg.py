@@ -19,7 +19,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
-@gin.configurable(module='tonic.torch.agents')
+@gin.configurable
 class D4PG(agents.DDPG):
     '''Distributed Distributional Deterministic Policy Gradients.
     D4PG: https://arxiv.org/pdf/1804.08617.pdf

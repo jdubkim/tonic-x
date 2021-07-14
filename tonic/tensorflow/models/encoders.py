@@ -2,7 +2,7 @@ import gin
 import tensorflow as tf
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class ObservationEncoder(tf.keras.Model):
     def initialize(self, observation_normalizer=None):
         self.observation_normalizer = observation_normalizer
@@ -13,7 +13,7 @@ class ObservationEncoder(tf.keras.Model):
         return observations
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class ObservationActionEncoder(tf.keras.Model):
     def initialize(self, observation_normalizer=None):
         self.observation_normalizer = observation_normalizer

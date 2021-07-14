@@ -20,7 +20,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
-@gin.configurable(module='tonic.torch.agents')
+@gin.configurable
 class SAC(agents.DDPG):
     '''Soft Actor-Critic.
     SAC: https://arxiv.org/pdf/1801.01290.pdf

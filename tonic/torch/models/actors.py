@@ -35,7 +35,7 @@ class SquashedMultivariateNormalDiag:
         return torch.tanh(self._distribution.mean)
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class DetachedScaleGaussianPolicyHead(torch.nn.Module):
     def __init__(
         self, loc_activation=torch.nn.Tanh, loc_fn=None, log_scale_init=0.,
@@ -68,7 +68,7 @@ class DetachedScaleGaussianPolicyHead(torch.nn.Module):
         return self.distribution(loc, scale)
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class GaussianPolicyHead(torch.nn.Module):
     def __init__(
         self, loc_activation=torch.nn.Tanh, loc_fn=None,
@@ -101,7 +101,7 @@ class GaussianPolicyHead(torch.nn.Module):
         return self.distribution(loc, scale)
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class DeterministicPolicyHead(torch.nn.Module):
     def __init__(self, activation=torch.nn.Tanh, fn=None):
         super().__init__()
@@ -119,7 +119,7 @@ class DeterministicPolicyHead(torch.nn.Module):
         return self.action_layer(inputs)
 
 
-@gin.configurable(module='tonic.torch.models')
+@gin.configurable
 class Actor(torch.nn.Module):
     def __init__(self, encoder, torso, head):
         super().__init__()

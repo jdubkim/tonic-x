@@ -7,8 +7,17 @@ import gin
 import numpy as np
 
 import tonic  # noqa
-import tonic.train
-from tonic.utils.util import get_agent
+from tonic.environments import Bullet, ControlSuite, Gym
+
+
+@gin.configurable
+def load_config(agent, environment, config=None):
+    ''' Loads agent and environment from gin if it exists.
+        Otherwise, load agent and environment from config '''
+    if not config:
+        return agent, environment
+
+    return config.agent, config.environment
 
 
 def play_gym(agent, environment):
@@ -113,7 +122,7 @@ def play_control_suite(agent, environment):
 
 
 @gin.configurable
-def play(path, checkpoint, seed):
+def play(path, checkpoint, seed, default_agent):
     '''Reloads an agent and an environment from a previous experiment.'''
 
     tonic.logger.log(f'Loading experiment from {path}')
@@ -160,13 +169,20 @@ def play(path, checkpoint, seed):
 
     # Load the experiment configuration.
     config_file_path = os.path.join(path, 'config.gin')
-    gin.parse_config_file(config_file_path)
 
-    # Build the agent
-    agent, agent_name = get_agent()
+    if not os.path.isfile(config_file_path):
+        # Load default agent and environment
+        agent = eval(default_agent) if default_agent else \
+            tonic.agents.NormalRandom()
+        _environment = lambda: Gym('Pendulum-v0')
+    else:
+        gin.parse_config_files_and_bindings([config_file_path,
+                                            'tonic/configs/play.gin'], None)
+        # Load stored agent and environment
+        agent, _environment = load_config()
 
     # Build the environment
-    environment = tonic.environments.Environment()
+    environment = tonic.environments.Environment(_environment)
     environment.initialize(seed)
 
     # Initialize the agent.
@@ -178,15 +194,13 @@ def play(path, checkpoint, seed):
     if checkpoint_path:
         agent.load(checkpoint_path)
 
-    environment.render()
-    play_gym(agent, environment)
     # Play with the agent in the environment.
-    # if environment.environments[0].env_type == 'ControlSuite':
-    #     play_control_suite(agent, environment)
-    # else:
-    #     if environment.environments[0].env_type == 'Bullet':
-    #         environment.render()
-    #     play_gym(agent, environment)
+    if _environment.__name__ == 'ControlSuite':
+        play_control_suite(agent, environment)
+    else:
+        if _environment.__name__ == 'Bullet':
+            environment.render()
+        play_gym(agent, environment)
 
 
 if __name__ == '__main__':
@@ -195,5 +209,6 @@ if __name__ == '__main__':
     parser.add_argument('--path', default='.')
     parser.add_argument('--checkpoint', default='last')
     parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--default-agent', default=None)
     args = vars(parser.parse_args())
     play(**args)

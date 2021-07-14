@@ -4,7 +4,7 @@ import tensorflow as tf
 from tonic.tensorflow import models
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class ValueHead(tf.keras.Model):
     def __init__(self, dense_kwargs=None):
         super().__init__()
@@ -23,7 +23,7 @@ class ValueHead(tf.keras.Model):
         return out
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class CategoricalWithSupport:
     def __init__(self, values, logits):
         self.values = values
@@ -50,7 +50,7 @@ class CategoricalWithSupport:
         return tf.reduce_sum(delta_clipped * self.probabilities[:, None], 2)
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class DistributionalValueHead(tf.keras.Model):
     def __init__(self, vmin, vmax, num_atoms, dense_kwargs=None):
         super().__init__()
@@ -71,7 +71,7 @@ class DistributionalValueHead(tf.keras.Model):
         return CategoricalWithSupport(values=self.values, logits=logits)
 
 
-@gin.configurable(module='tonic.tensorflow.models')
+@gin.configurable
 class Critic(tf.keras.Model):
     def __init__(self, encoder, torso, head):
         super().__init__()

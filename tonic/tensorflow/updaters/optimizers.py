@@ -20,7 +20,7 @@ def assign_params_from_flat(new_params, params):
         p.assign(p_new)
 
 
-@gin.configurable(module='tonic.tensorflow.updaters')
+@gin.configurable
 class ConjugateGradient:
     def __init__(
         self, conjugate_gradient_steps=10, damping_coefficient=0.1,

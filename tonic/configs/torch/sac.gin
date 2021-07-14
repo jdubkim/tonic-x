@@ -2,18 +2,20 @@ import gin.torch.external_configurables
 
 import tonic.torch
 
-# Train Configurations
-Config.agent = @SAC()
-Config.trainer = @Trainer()
-Config.before_training = None
-Config.after_training = None
-Config.sequential = 1
-Config.parallel = 1
-Config.seed = 10
-Config.name = None
+# Train Settings
+AGENT = @SAC()
+ENVIRONMENT = @Bullet
+Bullet.name = %environment_name
+environment_name = 'AntBulletEnv-v0'
 
-# Environment Configurations
-Config.environment = "tonic.environments.Bullet('AntBulletEnv-v0')"
+trainer = @Trainer()
+NAME = None
+sequential = 1
+parallel = 1
+seed = 10
+
+before_training = None
+after_training = None
 
 # Agent Configurations
 SAC.replay = @Buffer()
@@ -23,3 +25,7 @@ SAC.critic_updater = @TwinCriticSoftQLearning()
 
 MLP.sizes = (256, 256)
 MLP.activation = 'relu'
+
+# Macros
+initialize.seed = %seed
+Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]
