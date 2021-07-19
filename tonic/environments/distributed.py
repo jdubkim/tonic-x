@@ -157,7 +157,7 @@ class Parallel:
 
 
 @gin.configurable
-def environment(builder, worker_groups=1, workers_per_group=1):
+def Environment(builder, worker_groups=1, workers_per_group=1): # noqa
     '''Distributes workers over parallel and sequential groups.'''
     dummy_environment = builder()
     max_episode_steps = dummy_environment.max_episode_steps
@@ -172,6 +172,3 @@ def environment(builder, worker_groups=1, workers_per_group=1):
         builder, worker_groups=worker_groups,
         workers_per_group=workers_per_group,
         max_episode_steps=max_episode_steps)
-
-
-Environment = environment

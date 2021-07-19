@@ -20,20 +20,16 @@ FLAGS = flags.FLAGS
 
 
 @gin.configurable
-def train(agent, environment, trainer, before_training, after_training,
-          parallel, sequential, cfg):
+def train(agent, environment, trainer, before_training, after_training):
     '''Trains an agent on an environment.'''
 
     # Build the train and test environments.
     _environment = environment
-    environment = tonic.environments.Environment(
-        _environment, worker_groups=parallel,
-        workers_per_group=sequential)
+    environment = tonic.environments.Environment(_environment)
     test_environment = tonic.environments.Environment(_environment)
 
     # Initialize the logger to save data to the path environment/name/seed.
-    tonic.logger.initialize(script_path=__file__,
-                            config=cfg)
+    tonic.logger.initialize(script_path=__file__)
 
     # Build the trainer.
     trainer.initialize(
@@ -66,9 +62,10 @@ def main(argv):
 
     # Parse configurations to train function
     with gin.unlock_config():
+        gin.bind_parameter('Logger.config', cfg)
         gin.parse_config_file('tonic/configs/train.gin')
 
-    train(cfg=cfg)
+    train()
 
 
 if __name__ == '__main__':

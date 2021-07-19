@@ -27,4 +27,3 @@ MLP.activation = 'tanh'
 
 # Macros
 initialize.seed = %seed
-Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]
