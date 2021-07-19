@@ -38,15 +38,18 @@ def train(agent, environment, trainer, before_training, after_training):
 
     # Run some code before training.
     if before_training:
-        exec(compile(open(before_training).read(), before_training, 'exec'))
+        if '.py' in before_training:
+            exec(compile(open(before_training).read(),
+                         before_training, 'exec'))
 
     # Train.
     trainer.run()
 
     # Run some code after training.
     if after_training:
-        exec(compile(open(after_training).read(), before_training, 'exec'))
-        # os.system('python ' + after_training)
+        if '.py' in after_training:
+            exec(compile(open(after_training).read(),
+                         after_training, 'exec'))
 
 
 def main(argv):

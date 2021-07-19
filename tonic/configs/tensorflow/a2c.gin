@@ -15,9 +15,9 @@ parallel = 1
 seed = 10
 
 before_training = None
+after_training = None
 
 PATH = None
-after_training = None
 
 # Agent Configurations
 A2C.replay = @Segment()
