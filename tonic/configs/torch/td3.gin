@@ -17,6 +17,8 @@ seed = 10
 before_training = None
 after_training = None
 
+PATH = None
+
 # Agent Configurations
 TD3.replay = @Buffer()
 TD3.exploration = @NormalActionNoise()

@@ -7,7 +7,6 @@ import gin
 import numpy as np
 import termcolor
 
-
 current_logger = None
 
 
@@ -15,12 +14,13 @@ current_logger = None
 class Logger:
     '''Logger used to display and save logs, and save experiment configs.'''
 
-    def __init__(self, path=None, width=60, script_path=None, config=None):
+    def __init__(self, path=None, environment_name=None,
+                 agent=None, name=None, seed=None, sequential=None,
+                 parallel=None, width=60, script_path=None, config=None):
 
         if path is not None:
-            print(path)
-            env_name, agent, name, seed, sequential, parallel = path
-
+            self.path = path
+        else:
             if not name:
                 if hasattr(agent, 'name'):
                     name = agent.name
@@ -30,9 +30,7 @@ class Logger:
             if name and (parallel != 1 or sequential != 1):
                 name += f'-{parallel}x{sequential}'
 
-            self.path = os.path.join(env_name, name, str(seed))
-        else:
-            self.path = str(time.time())
+            self.path = os.path.join(environment_name, name, str(seed))
 
         self.log_file_path = os.path.join(self.path, 'log.csv')
 

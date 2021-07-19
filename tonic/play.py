@@ -13,12 +13,12 @@ from tonic.environments import Bullet, ControlSuite, Gym
 
 flags.DEFINE_multi_string(
     'gin_file', [], 'List of paths to gin configuration files.'
-                    ' Example: "tonic/configs/agent.gin".'
+                    ' Example: "tonic/configs/train.gin".'
 )
 flags.DEFINE_multi_string(
     'gin_param', [],
     'Gin parameter bindings to override the values in the configuration '
-    'files. Example: "train.seed = 10", "train.sequential = 1".'
+    'files. Example: "AGENT = @A2C()", "environment_name = "AntBulletEnv-v0".'
 )
 
 FLAGS = flags.FLAGS
@@ -152,6 +152,7 @@ def play(path='.', checkpoint='last', seed=10, agent=None, environment=None):
         tonic.logger.log('Not loading any weights')
 
     else:
+        print("DEBUG: ", path)
         checkpoint_path = os.path.join(path, 'checkpoints')
         if not os.path.isdir(checkpoint_path):
             tonic.logger.error(f'{checkpoint_path} is not a directory')
@@ -217,11 +218,15 @@ def main(argv):
     # Parse gin configurations
     gin.parse_config_files_and_bindings(gin_file, gin_param)
 
+    # Receive path from gin file
+    config = [file for file in gin_file if 'config.gin' in file][0]
+    path = os.path.dirname(config)
+
     # Parse configurations to play function
     with gin.unlock_config():
         gin.parse_config_file('tonic/configs/play.gin')
 
-    play()
+    play(path)
 
 
 if __name__ == '__main__':

@@ -17,6 +17,8 @@ seed = 10
 before_training = None
 after_training = None
 
+PATH = None
+
 # Agent Configurations
 D4PG.replay = @Buffer()
 Buffer.num_steps = 5

@@ -10,4 +10,10 @@ Environment.worker_groups = %parallel
 Environment.workers_per_group = %sequential
 
 # Logger configurations
-Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]
+Logger.path = %PATH
+Logger.environment_name = %environment_name
+Logger.agent = %AGENT
+Logger.name = %NAME
+Logger.seed = %seed
+Logger.sequential = %sequential
+Logger.parallel = %parallel

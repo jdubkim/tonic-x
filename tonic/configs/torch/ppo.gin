@@ -17,6 +17,8 @@ seed = 10
 before_training = None
 after_training = None
 
+PATH = None
+
 # Agent Configurations
 PPO.replay = @Segment()
 PPO.actor_updater = @ClippedRatio()
