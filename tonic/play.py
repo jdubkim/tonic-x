@@ -3,6 +3,7 @@
 import argparse
 import os
 
+from absl import app, flags
 import gin
 import numpy as np
 
@@ -10,14 +11,25 @@ import tonic  # noqa
 from tonic.environments import Bullet, ControlSuite, Gym
 
 
-@gin.configurable
-def load_config(agent, environment, config=None):
-    ''' Loads agent and environment from gin if it exists.
-        Otherwise, load agent and environment from config '''
-    if not config:
-        return agent, environment
+flags.DEFINE_multi_string(
+    'gin_file', [], 'List of paths to gin configuration files.'
+                    ' Example: "tonic/configs/agent.gin".'
+)
+flags.DEFINE_multi_string(
+    'gin_param', [],
+    'Gin parameter bindings to override the values in the configuration '
+    'files. Example: "train.seed = 10", "train.sequential = 1".'
+)
 
-    return config.agent, config.environment
+FLAGS = flags.FLAGS
+
+
+def load_default_agent():
+    return tonic.agents.NormalRandom()
+
+
+def load_default_environment():
+    return Bullet('BulletAntEnv-v0')
 
 
 def play_gym(agent, environment):
@@ -122,10 +134,17 @@ def play_control_suite(agent, environment):
 
 
 @gin.configurable
-def play(path, checkpoint, seed, default_agent):
+def play(path='.', checkpoint='last', seed=10, agent=None, environment=None):
     '''Reloads an agent and an environment from a previous experiment.'''
 
     tonic.logger.log(f'Loading experiment from {path}')
+
+    # If agent and environment not specified, load default agent and
+    # environment
+    if not agent:
+        agent = load_default_agent()
+    if not environment:
+        environment = load_default_environment()
 
     # Use no checkpoint, the agent is freshly created.
     if checkpoint == 'none':
@@ -167,21 +186,8 @@ def play(path, checkpoint, seed, default_agent):
             tonic.logger.error(f'No checkpoint found in {checkpoint_path}')
             checkpoint_path = None
 
-    # Load the experiment configuration.
-    config_file_path = os.path.join(path, 'config.gin')
-
-    if not os.path.isfile(config_file_path):
-        # Load default agent and environment
-        agent = eval(default_agent) if default_agent else \
-            tonic.agents.NormalRandom()
-        _environment = lambda: Gym('Pendulum-v0')
-    else:
-        gin.parse_config_files_and_bindings([config_file_path,
-                                            'tonic/configs/play.gin'], None)
-        # Load stored agent and environment
-        agent, _environment = load_config()
-
     # Build the environment
+    _environment = environment
     environment = tonic.environments.Environment(_environment)
     environment.initialize(seed)
 
@@ -203,12 +209,20 @@ def play(path, checkpoint, seed, default_agent):
         play_gym(agent, environment)
 
 
+def main(argv):
+
+    gin_file = FLAGS.gin_file
+    gin_param = FLAGS.gin_param
+
+    # Parse gin configurations
+    gin.parse_config_files_and_bindings(gin_file, gin_param)
+
+    # Parse configurations to play function
+    with gin.unlock_config():
+        gin.parse_config_file('tonic/configs/play.gin')
+
+    play()
+
+
 if __name__ == '__main__':
-    # Argument parsing.
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--path', default='.')
-    parser.add_argument('--checkpoint', default='last')
-    parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--default-agent', default=None)
-    args = vars(parser.parse_args())
-    play(**args)
+    app.run(main)
