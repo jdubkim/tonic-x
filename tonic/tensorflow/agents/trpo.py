@@ -1,9 +1,11 @@
+import gin
 import tensorflow as tf
 
 from tonic import logger
 from tonic.tensorflow import agents, updaters
 
 
+@gin.configurable
 class TRPO(agents.A2C):
     '''Trust Region Policy Optimization.
     TRPO: https://arxiv.org/pdf/1502.05477.pdf

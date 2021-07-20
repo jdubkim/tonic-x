@@ -1,3 +1,4 @@
+import gin
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
@@ -8,6 +9,7 @@ from tonic.tensorflow import updaters
 FLOAT_EPSILON = 1e-8
 
 
+@gin.configurable
 class StochasticPolicyGradient:
     def __init__(self, optimizer=None, entropy_coeff=0, gradient_clip=0):
         self.optimizer = optimizer or \
@@ -48,6 +50,7 @@ class StochasticPolicyGradient:
         return dict(loss=loss, kl=kl, entropy=entropy, std=std)
 
 
+@gin.configurable
 class ClippedRatio:
     def __init__(
         self, optimizer=None, ratio_clip=0.2, kl_threshold=0.015,
@@ -104,6 +107,7 @@ class ClippedRatio:
             std=std, stop=kl > self.kl_threshold)
 
 
+@gin.configurable
 class TrustRegionPolicyGradient:
     def __init__(self, optimizer=None, entropy_coeff=0):
         self.optimizer = optimizer or updaters.ConjugateGradient()
@@ -150,6 +154,7 @@ class TrustRegionPolicyGradient:
         return tf.reduce_mean(distributions.kl_divergence(old_distributions))
 
 
+@gin.configurable
 class DeterministicPolicyGradient:
     def __init__(self, optimizer=None, gradient_clip=0):
         self.optimizer = optimizer or \
@@ -176,6 +181,7 @@ class DeterministicPolicyGradient:
         return dict(loss=loss)
 
 
+@gin.configurable
 class DistributionalDeterministicPolicyGradient:
     def __init__(self, optimizer=None, gradient_clip=0):
         self.optimizer = optimizer or \
@@ -203,6 +209,7 @@ class DistributionalDeterministicPolicyGradient:
         return dict(loss=loss)
 
 
+@gin.configurable
 class TwinCriticSoftDeterministicPolicyGradient:
     def __init__(self, optimizer=None, entropy_coeff=0.2, gradient_clip=0):
         self.optimizer = optimizer or \
@@ -237,6 +244,7 @@ class TwinCriticSoftDeterministicPolicyGradient:
         return dict(loss=loss)
 
 
+@gin.configurable
 class MaximumAPosterioriPolicyOptimization:
     def __init__(
         self, num_samples=20, epsilon=1e-1, epsilon_penalty=1e-3,

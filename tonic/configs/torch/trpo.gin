@@ -1,0 +1,32 @@
+import gin.torch.external_configurables
+
+import tonic.torch
+
+# Train Settings
+AGENT = @TRPO()
+ENVIRONMENT = @Bullet
+Bullet.name = %environment_name
+environment_name = 'AntBulletEnv-v0'
+
+trainer = @Trainer()
+NAME = None
+sequential = 1
+parallel = 1
+seed = 10
+
+before_training = None
+after_training = None
+
+PATH = None
+
+# Agent Configurations
+TRPO.replay = @Segment()
+TRPO.actor_updater = @TrustRegionPolicyGradient()
+TRPO.critic_updater = @VRegression()
+
+MLP.sizes = (64, 64)
+MLP.activation = 'tanh'
+
+# Macros
+initialize.seed = %seed
+Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

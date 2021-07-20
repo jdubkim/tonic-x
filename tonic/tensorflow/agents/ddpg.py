@@ -1,3 +1,4 @@
+import gin
 import tensorflow as tf
 
 from tonic import explorations, logger, replays
@@ -17,6 +18,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
+@gin.configurable
 class DDPG(agents.Agent):
     '''Deep Deterministic Policy Gradient.
     DDPG: https://arxiv.org/pdf/1509.02971.pdf

@@ -1,12 +1,13 @@
 '''Environment builders for popular domains.'''
-
+import gin
 import gym.wrappers
 import numpy as np
 
 from tonic import environments
 
 
-def gym_environment(*args, **kwargs):
+@gin.configurable
+def Gym(*args, **kwargs): # noqa
     '''Returns a wrapped Gym environment.'''
 
     def _builder(*args, **kwargs):
@@ -15,7 +16,8 @@ def gym_environment(*args, **kwargs):
     return build_environment(_builder, *args, **kwargs)
 
 
-def bullet_environment(*args, **kwargs):
+@gin.configurable
+def Bullet(*args, **kwargs): # noqa
     '''Returns a wrapped PyBullet environment.'''
 
     def _builder(*args, **kwargs):
@@ -25,7 +27,8 @@ def bullet_environment(*args, **kwargs):
     return build_environment(_builder, *args, **kwargs)
 
 
-def control_suite_environment(*args, **kwargs):
+@gin.configurable
+def ControlSuite(*args, **kwargs): # noqa
     '''Returns a wrapped Control Suite environment.'''
 
     def _builder(name, *args, **kwargs):
@@ -134,9 +137,3 @@ class ControlSuiteEnvironment(gym.core.Env):
         assert mode == 'rgb_array'
         return self.environment.physics.render(
             height=height, width=width, camera_id=camera_id)
-
-
-# Aliases.
-Gym = gym_environment
-Bullet = bullet_environment
-ControlSuite = control_suite_environment

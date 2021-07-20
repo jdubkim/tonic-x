@@ -1,6 +1,8 @@
+import gin
 import numpy as np
 
 
+@gin.configurable
 class Buffer:
     '''Replay storing a large number of transitions for off-policy learning
     and using n-step returns.'''

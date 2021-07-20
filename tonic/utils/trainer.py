@@ -1,11 +1,13 @@
 import os
 import time
 
+import gin
 import numpy as np
 
 from tonic import logger
 
 
+@gin.configurable
 class Trainer:
     '''Trainer used to train and evaluate an agent on an environment.'''
 
@@ -19,9 +21,11 @@ class Trainer:
         self.test_episodes = test_episodes
         self.show_progress = show_progress
 
+    @gin.configurable
     def initialize(self, agent, environment, test_environment=None, seed=None):
         if seed is not None:
             environment.initialize(seed=seed)
+
         if test_environment and seed is not None:
             test_environment.initialize(seed=seed + 10000)
 

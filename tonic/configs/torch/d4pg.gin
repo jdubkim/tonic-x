@@ -1,0 +1,34 @@
+import gin.torch.external_configurables
+
+import tonic.torch
+
+# Train Settings
+AGENT = @D4PG()
+ENVIRONMENT = @Bullet
+Bullet.name = %environment_name
+environment_name = 'AntBulletEnv-v0'
+
+trainer = @Trainer()
+NAME = None
+sequential = 1
+parallel = 1
+seed = 10
+
+before_training = None
+after_training = None
+
+PATH = None
+
+# Agent Configurations
+D4PG.replay = @Buffer()
+Buffer.num_steps = 5
+D4PG.exploration = @NormalActionNoise()
+D4PG.actor_updater = @DistributionalDeterministicPolicyGradient()
+D4PG.critic_updater = @DistributionalDeterministicQLearning()
+
+MLP.sizes = (256, 256)
+MLP.activation = 'relu'
+
+# Macros
+initialize.seed = %seed
+Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

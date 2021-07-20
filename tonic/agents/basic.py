@@ -1,10 +1,12 @@
 '''Some basic non-learning agents used for example for debugging.'''
 
+import gin
 import numpy as np
 
 from tonic import agents
 
 
+@gin.configurable
 class NormalRandom(agents.Agent):
     '''Random agent producing actions from normal distributions.'''
 
@@ -28,6 +30,7 @@ class NormalRandom(agents.Agent):
         return self.np_random.normal(self.loc, self.scale, shape)
 
 
+@gin.configurable
 class UniformRandom(agents.Agent):
     '''Random agent producing actions from uniform distributions.'''
 
@@ -47,6 +50,7 @@ class UniformRandom(agents.Agent):
         return self.np_random.uniform(-1, 1, shape)
 
 
+@gin.configurable
 class OrnsteinUhlenbeck(agents.Agent):
     '''Random agent producing correlated actions from an OU process.'''
 
@@ -97,6 +101,7 @@ class OrnsteinUhlenbeck(agents.Agent):
         self.test_actions *= (1. - resets)[:, None]
 
 
+@gin.configurable
 class Constant(agents.Agent):
     '''Agent producing a unique constant action.'''
 

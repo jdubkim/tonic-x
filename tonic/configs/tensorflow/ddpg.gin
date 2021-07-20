@@ -1,0 +1,34 @@
+import gin.tf.external_configurables
+
+import tonic.tensorflow
+
+# Train Settings
+AGENT = @DDPG()
+ENVIRONMENT = @Bullet
+Bullet.name = %environment_name
+environment_name = 'AntBulletEnv-v0'
+
+trainer = @Trainer()
+NAME = None
+sequential = 1
+parallel = 1
+seed = 10
+
+before_training = None
+after_training = None
+
+PATH = None
+
+# Agent Configurations
+DDPG.replay = @Buffer()
+DDPG.exploration = @NormalActionNoise()
+DDPG.actor_updater = @DeterministicPolicyGradient()
+DDPG.critic_updater = @DeterministicQLearning()
+
+mlp.units = (256, 256)
+mlp.activation = 'relu'
+
+# Macros
+initialize.seed = %seed
+Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]
+

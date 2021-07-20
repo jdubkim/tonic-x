@@ -1,8 +1,10 @@
+import gin
 import numpy as np
 
 from tonic import replays
 
 
+@gin.configurable
 class Segment:
     '''Replay storing recent transitions for on-policy learning.'''
 

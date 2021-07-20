@@ -1,3 +1,5 @@
+import gin
+
 from tonic import logger
 from tonic.tensorflow import agents, models, normalizers, updaters
 
@@ -15,6 +17,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
+@gin.configurable
 class TD3(agents.DDPG):
     '''Twin Delayed Deep Deterministic Policy Gradient.
     TD3: https://arxiv.org/pdf/1802.09477.pdf

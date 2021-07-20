@@ -1,0 +1,4 @@
+play.checkpoint = 'last'
+play.seed = %seed
+play.agent = %AGENT
+play.environment = %ENVIRONMENT

@@ -1,6 +1,8 @@
+import gin
 import torch
 
 
+@gin.configurable
 class MLP(torch.nn.Module):
     def __init__(self, sizes, activation, fn=None):
         super().__init__()

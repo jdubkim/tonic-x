@@ -3,16 +3,37 @@
 import argparse
 import os
 
+from absl import app, flags
+import gin
 import numpy as np
-import yaml
 
 import tonic  # noqa
+from tonic.environments import Bullet, ControlSuite, Gym
+
+
+flags.DEFINE_multi_string(
+    'gin_file', [], 'List of paths to gin configuration files.'
+                    ' Example: "tonic/configs/train.gin".'
+)
+flags.DEFINE_multi_string(
+    'gin_param', [],
+    'Gin parameter bindings to override the values in the configuration '
+    'files. Example: "AGENT = @A2C()", "environment_name = "AntBulletEnv-v0".'
+)
+
+FLAGS = flags.FLAGS
+
+
+def load_default_agent():
+    return tonic.agents.NormalRandom()
+
+
+def load_default_environment():
+    return Bullet('BulletAntEnv-v0')
 
 
 def play_gym(agent, environment):
     '''Launches an agent in a Gym-based environment.'''
-
-    environment = tonic.environments.distribute(lambda: environment)
 
     observations = environment.start()
     environment.render()
@@ -112,10 +133,18 @@ def play_control_suite(agent, environment):
     viewer.launch(environment, policy)
 
 
-def play(path, checkpoint, seed):
+@gin.configurable
+def play(path='.', checkpoint='last', seed=10, agent=None, environment=None):
     '''Reloads an agent and an environment from a previous experiment.'''
 
     tonic.logger.log(f'Loading experiment from {path}')
+
+    # If agent and environment not specified, load default agent and
+    # environment
+    if not agent:
+        agent = load_default_agent()
+    if not environment:
+        environment = load_default_environment()
 
     # Use no checkpoint, the agent is freshly created.
     if checkpoint == 'none':
@@ -123,6 +152,7 @@ def play(path, checkpoint, seed):
         tonic.logger.log('Not loading any weights')
 
     else:
+        print("DEBUG: ", path)
         checkpoint_path = os.path.join(path, 'checkpoints')
         if not os.path.isdir(checkpoint_path):
             tonic.logger.error(f'{checkpoint_path} is not a directory')
@@ -157,22 +187,10 @@ def play(path, checkpoint, seed):
             tonic.logger.error(f'No checkpoint found in {checkpoint_path}')
             checkpoint_path = None
 
-    # Load the experiment configuration.
-    arguments_path = os.path.join(path, 'config.yaml')
-    with open(arguments_path, 'r') as config_file:
-        config = yaml.load(config_file, Loader=yaml.FullLoader)
-    config = argparse.Namespace(**config)
-
-    # Run the header first, e.g. to load an ML framework.
-    if config.header:
-        exec(config.header)
-
-    # Build the agent.
-    agent = eval(config.agent)
-
-    # Build the environment.
-    environment = eval(config.environment)
-    environment.seed(seed)
+    # Build the environment
+    _environment = environment
+    environment = tonic.environments.Environment(_environment)
+    environment.initialize(seed)
 
     # Initialize the agent.
     agent.initialize(
@@ -184,19 +202,32 @@ def play(path, checkpoint, seed):
         agent.load(checkpoint_path)
 
     # Play with the agent in the environment.
-    if 'ControlSuite' in config.environment:
+    if _environment.__name__ == 'ControlSuite':
         play_control_suite(agent, environment)
     else:
-        if 'Bullet' in config.environment:
+        if _environment.__name__ == 'Bullet':
             environment.render()
         play_gym(agent, environment)
 
 
+def main(argv):
+
+    gin_file = FLAGS.gin_file
+    gin_param = FLAGS.gin_param
+
+    # Parse gin configurations
+    gin.parse_config_files_and_bindings(gin_file, gin_param)
+
+    # Receive path from gin file
+    config = [file for file in gin_file if 'config.gin' in file][0]
+    path = os.path.dirname(config)
+
+    # Parse configurations to play function
+    with gin.unlock_config():
+        gin.parse_config_file('tonic/configs/play.gin')
+
+    play(path)
+
+
 if __name__ == '__main__':
-    # Argument parsing.
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--path', default='.')
-    parser.add_argument('--checkpoint', default='last')
-    parser.add_argument('--seed', type=int, default=0)
-    args = vars(parser.parse_args())
-    play(**args)
+    app.run(main)

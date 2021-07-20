@@ -1,0 +1,35 @@
+import gin.tf.external_configurables
+
+import tonic.tensorflow
+
+# Train Settings
+AGENT = @A2C()
+ENVIRONMENT = @Bullet
+Bullet.name = %environment_name
+environment_name = 'AntBulletEnv-v0'
+
+trainer = @Trainer()
+NAME = None
+sequential = 1
+parallel = 1
+seed = 10
+
+before_training = None
+after_training = None
+
+PATH = None
+
+# Agent Configurations
+A2C.replay = @Segment()
+A2C.actor_updater = @StochasticPolicyGradient()
+A2C.critic_updater = @VRegression()
+VRegression.optimizer = @tf.keras.optimizers.Adam()
+tf.keras.optimizers.Adam.lr = 1e-3
+tf.keras.optimizers.Adam.epsilon = 1e-8
+
+mlp.units = (64, 64)
+mlp.activation = 'tanh'
+
+# Macros
+initialize.seed = %seed
+Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

@@ -3,19 +3,35 @@ import datetime
 import os
 import time
 
+import gin
 import numpy as np
 import termcolor
-import yaml
-
 
 current_logger = None
 
 
+@gin.configurable
 class Logger:
     '''Logger used to display and save logs, and save experiment configs.'''
 
-    def __init__(self, path=None, width=60, script_path=None, config=None):
-        self.path = path or str(time.time())
+    def __init__(self, path=None, environment_name=None,
+                 agent=None, name=None, seed=None, sequential=None,
+                 parallel=None, width=60, script_path=None, config=None):
+
+        if path is not None:
+            self.path = path
+        else:
+            if not name:
+                if hasattr(agent, 'name'):
+                    name = agent.name
+                else:
+                    name = agent.__class__.__name__
+
+            if name and (parallel != 1 or sequential != 1):
+                name += f'-{parallel}x{sequential}'
+
+            self.path = os.path.join(environment_name, name, str(seed))
+
         self.log_file_path = os.path.join(self.path, 'log.csv')
 
         # Save the launch script.
@@ -37,9 +53,10 @@ class Logger:
                 os.makedirs(self.path, exist_ok=True)
             except Exception:
                 pass
-            config_path = os.path.join(self.path, 'config.yaml')
+            config_path = os.path.join(self.path, 'config.gin')
             with open(config_path, 'w') as config_file:
-                yaml.dump(config, config_file)
+                config_file.write(config)
+                print(config)
             log(f'Config file saved to {config_path}')
 
         self.known_keys = set()
@@ -167,8 +184,8 @@ class Logger:
         self.last_epoch_time = time.time()
 
     def show_progress(
-        self, steps, num_epoch_steps, num_steps, color='white',
-        on_color='on_blue'
+            self, steps, num_epoch_steps, num_steps, color='white',
+            on_color='on_blue'
     ):
         '''Shows a progress bar for the current epoch and total training.'''
 

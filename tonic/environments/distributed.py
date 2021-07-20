@@ -2,6 +2,7 @@
 
 import multiprocessing
 
+import gin
 import numpy as np
 
 
@@ -94,7 +95,7 @@ class Parallel:
                 out = envs.step(actions)
                 self.output_queue.put((index, out))
 
-        dummy_environment = self.environment_builder()
+        dummy_environment = self.environment_builder
         self.observation_space = dummy_environment.observation_space
         self.action_space = dummy_environment.action_space
         del dummy_environment
@@ -155,18 +156,19 @@ class Parallel:
         return observations, infos
 
 
-def distribute(environment_builder, worker_groups=1, workers_per_group=1):
+@gin.configurable
+def Environment(builder, worker_groups=1, workers_per_group=1): # noqa
     '''Distributes workers over parallel and sequential groups.'''
-    dummy_environmentironment = environment_builder()
-    max_episode_steps = dummy_environmentironment.max_episode_steps
-    del dummy_environmentironment
+    dummy_environment = builder()
+    max_episode_steps = dummy_environment.max_episode_steps
+    del dummy_environment
 
     if worker_groups < 2:
         return Sequential(
-            environment_builder, max_episode_steps=max_episode_steps,
+            builder, max_episode_steps=max_episode_steps,
             workers=workers_per_group)
 
     return Parallel(
-        environment_builder, worker_groups=worker_groups,
+        builder, worker_groups=worker_groups,
         workers_per_group=workers_per_group,
         max_episode_steps=max_episode_steps)

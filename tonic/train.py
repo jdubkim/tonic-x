@@ -1,81 +1,75 @@
 '''Script used to train agents.'''
 
-import argparse
-import os
+from absl import app, flags
+import gin
 
 import tonic
 
 
-def train(
-    header, agent, environment, trainer, before_training, after_training,
-    parallel, sequential, seed, name
-):
+flags.DEFINE_multi_string(
+    'gin_file', [], 'List of paths to gin configuration files.'
+                    ' Example: "tonic/configs/agent.gin".'
+)
+flags.DEFINE_multi_string(
+    'gin_param', [],
+    'Gin parameter bindings to override the values in the configuration '
+    'files. Example: "train.seed = 10", "train.sequential = 1".'
+)
+
+FLAGS = flags.FLAGS
+
+
+@gin.configurable
+def train(agent, environment, trainer, before_training, after_training):
     '''Trains an agent on an environment.'''
-
-    # Capture the arguments to save them, e.g. to play with the trained agent.
-    args = dict(locals())
-
-    # Run the header first, e.g. to load an ML framework.
-    if header:
-        exec(header)
-
-    # Build the agent.
-    agent = eval(agent)
 
     # Build the train and test environments.
     _environment = environment
-    environment = tonic.environments.distribute(
-        lambda: eval(_environment), parallel, sequential)
-    test_environment = tonic.environments.distribute(
-        lambda: eval(_environment))
-
-    # Choose a name for the experiment.
-    if hasattr(test_environment, 'name'):
-        environment_name = test_environment.name
-    else:
-        environment_name = test_environment.__class__.__name__
-    if not name:
-        if hasattr(agent, 'name'):
-            name = agent.name
-        else:
-            name = agent.__class__.__name__
-        if parallel != 1 or sequential != 1:
-            name += f'-{parallel}x{sequential}'
+    environment = tonic.environments.Environment(_environment)
+    test_environment = tonic.environments.Environment(_environment)
 
     # Initialize the logger to save data to the path environment/name/seed.
-    path = os.path.join(environment_name, name, str(seed))
-    tonic.logger.initialize(path, script_path=__file__, config=args)
+    tonic.logger.initialize(script_path=__file__)
 
     # Build the trainer.
-    trainer = eval(trainer)
     trainer.initialize(
         agent=agent, environment=environment,
-        test_environment=test_environment, seed=seed)
+        test_environment=test_environment)
 
     # Run some code before training.
     if before_training:
-        exec(before_training)
+        if '.py' in before_training:
+            exec(compile(open(before_training).read(),
+                         before_training, 'exec'))
 
     # Train.
     trainer.run()
 
     # Run some code after training.
     if after_training:
-        exec(after_training)
+        if '.py' in after_training:
+            exec(compile(open(after_training).read(),
+                         after_training, 'exec'))
+
+
+def main(argv):
+
+    gin_file = FLAGS.gin_file
+    gin_param = FLAGS.gin_param
+
+    # Parse gin configurations
+    gin.parse_config_files_and_bindings(gin_file, gin_param)
+
+    # Store configs
+    cfg = gin.config_str()
+
+    # Parse configurations to train function
+    with gin.unlock_config():
+        gin.bind_parameter('Logger.config', cfg)
+        gin.parse_config_file('tonic/configs/train.gin')
+
+    train()
 
 
 if __name__ == '__main__':
-    # Argument parsing.
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--header')
-    parser.add_argument('--agent', required=True)
-    parser.add_argument('--environment', '--env', required=True)
-    parser.add_argument('--trainer', default='tonic.Trainer()')
-    parser.add_argument('--before_training')
-    parser.add_argument('--after_training')
-    parser.add_argument('--parallel', type=int, default=1)
-    parser.add_argument('--sequential', type=int, default=1)
-    parser.add_argument('--seed', type=int)
-    parser.add_argument('--name')
-    args = vars(parser.parse_args())
-    train(**args)
+    app.run(main)

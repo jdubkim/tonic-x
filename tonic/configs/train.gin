@@ -1,0 +1,19 @@
+# Train configurations
+train.agent = %AGENT
+train.trainer = %trainer
+train.environment = %ENVIRONMENT
+train.before_training = %before_training
+train.after_training = %after_training
+
+# Environment configurations
+Environment.worker_groups = %parallel
+Environment.workers_per_group = %sequential
+
+# Logger configurations
+Logger.path = %PATH
+Logger.environment_name = %environment_name
+Logger.agent = %AGENT
+Logger.name = %NAME
+Logger.seed = %seed
+Logger.sequential = %sequential
+Logger.parallel = %parallel

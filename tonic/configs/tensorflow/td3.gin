@@ -1,0 +1,33 @@
+import gin.tf.external_configurables
+
+import tonic.tensorflow
+
+# Train Settings
+AGENT = @TD3()
+ENVIRONMENT = @Bullet
+Bullet.name = %environment_name
+environment_name = 'AntBulletEnv-v0'
+
+trainer = @Trainer()
+NAME = None
+sequential = 1
+parallel = 1
+seed = 10
+
+before_training = None
+after_training = None
+
+PATH = None
+
+# Agent Configurations
+TD3.replay = @Buffer()
+TD3.exploration = @NormalActionNoise()
+TD3.actor_updater = @DeterministicPolicyGradient()
+TD3.critic_updater = @TwinCriticDeterministicQLearning()
+
+mlp.units = (256, 256)
+mlp.activation = 'relu'
+
+# Macros
+initialize.seed = %seed
+Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

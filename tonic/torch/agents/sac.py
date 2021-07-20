@@ -1,3 +1,4 @@
+import gin
 import torch
 
 from tonic import explorations  # noqa
@@ -19,6 +20,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
+@gin.configurable
 class SAC(agents.DDPG):
     '''Soft Actor-Critic.
     SAC: https://arxiv.org/pdf/1801.01290.pdf

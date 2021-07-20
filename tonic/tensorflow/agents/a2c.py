@@ -1,3 +1,4 @@
+import gin
 import tensorflow as tf
 
 from tonic import logger, replays
@@ -17,6 +18,7 @@ def default_model():
         observation_normalizer=normalizers.MeanStd())
 
 
+@gin.configurable
 class A2C(agents.Agent):
     '''Advantage Actor Critic (aka Vanilla Policy Gradient).
     A3C: https://arxiv.org/pdf/1602.01783.pdf
@@ -26,10 +28,9 @@ class A2C(agents.Agent):
         self, model=None, replay=None, actor_updater=None, critic_updater=None
     ):
         self.model = model or default_model()
-        self.replay = replay or replays.Segment()
-        self.actor_updater = actor_updater or \
-            updaters.StochasticPolicyGradient()
-        self.critic_updater = critic_updater or updaters.VRegression()
+        self.replay = replay
+        self.actor_updater = actor_updater
+        self.critic_updater = critic_updater
 
     def initialize(self, observation_space, action_space, seed=None):
         super().initialize(seed=seed)
