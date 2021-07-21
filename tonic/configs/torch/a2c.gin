@@ -14,7 +14,7 @@ sequential = 1
 parallel = 1
 seed = 10
 
-before_training = './before_training.py'
+before_training = None
 after_training = None
 
 PATH = None
