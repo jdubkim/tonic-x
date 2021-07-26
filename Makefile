@@ -1,11 +1,10 @@
+LINT_PATHS=tonic/ tests/ setup.py
 
-pytest:
+tests:
 	./scripts/run_tests.sh
 
 lint:
+	flake8 ${LINT_PATHS} --count --select=E9,F63,F7,F82 --show-source --statistics
+	flake8 ${LINT_PATHS} --count --exit-zero --statistics
 
-
-
-
-
-.PHONY: clean
+.PHONY: clean tests lint
