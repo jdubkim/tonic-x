@@ -22,7 +22,7 @@ jobs:
           # Install tensorflow cpu
           pip install tensorflow
           # Install pytorch cpu
-          pip install torch=1.8.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          pip install torch
           # Install dependencies
           pip install .[tests]
       - name: Lint
