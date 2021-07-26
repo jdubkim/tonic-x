@@ -1,0 +1,40 @@
+
+name: tonic-tests
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Tonic dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install tensorflow cpu
+          pip install tensorflow
+          # Install pytorch cpu
+          pip install torch=1.8.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          # Install dependencies
+          pip install .[tests]
+      - name: Check codestyle
+        run: |
+          make check-codestyle
+      - name: Reformat code
+        run: |
+          make lint
+      - name: Run tests
+        run: |
+          make tests
+
+
+
+
