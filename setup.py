@@ -9,7 +9,7 @@ setuptools.setup(
     author='Fabio Pardo',
     author_email='f.pardo@imperial.ac.uk',
     install_requires=[
-        'gym', 'matplotlib', 'numpy', 'pandas', 'pyyaml', 'termcolor'],
+        'gin', 'gym', 'matplotlib', 'numpy', 'pandas', 'pyyaml', 'termcolor'],
     extras_require={
         'tests': ['pytest', "pytest-cov", 'flake8'],
     },
