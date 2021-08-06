@@ -69,7 +69,6 @@ class DDPG(agents.Agent):
 
         # Prepare to update the normalizers.
         if self.model.observation_normalizer:
-            print(self.last_observations)
             self.model.observation_normalizer.record(self.last_observations)
         if self.model.return_normalizer:
             self.model.return_normalizer.record(rewards)

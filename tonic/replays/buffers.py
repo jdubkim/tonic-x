@@ -122,7 +122,7 @@ class DictBuffer(Buffer):
                     try:
                         kwargs[key].append(val)
                     except KeyError:
-                        kwargs[key] = val
+                        kwargs[key] = [val]
 
         if 'next_observations' in kwargs:
             obs = kwargs['next_observations']
@@ -132,7 +132,7 @@ class DictBuffer(Buffer):
                     try:
                         kwargs["next_"+key].append(val)
                     except KeyError:
-                        kwargs["next_"+key] = val
+                        kwargs["next_"+key] = [val]
 
         # Create the named buffers.
         if self.buffers is None:
@@ -153,6 +153,7 @@ class DictBuffer(Buffer):
         self.index = (self.index + 1) % self.max_size
         self.size = min(self.size + 1, self.max_size)
         self.steps += 1
+        
 
     def get(self, *keys):
         '''Get batches from named buffers.'''
@@ -165,7 +166,6 @@ class DictBuffer(Buffer):
             rows = indices // self.num_workers
             columns = indices % self.num_workers
 
-            keys = list(keys)
             transitions = {}
             for key in keys:
                 if key == 'observations':
@@ -179,7 +179,18 @@ class DictBuffer(Buffer):
                             for k in self.observation_keys}
                 else:
                     transitions[key] = self.buffers[key][rows, columns]
-             
+            
+            # print(self.buffers['observation'].shape)
+            # print(transitions['observations']['observation'].shape)
+            # print(self.buffers['observation'][rows, columns].shape)
+            # print(self.buffers['actions'].shape)
+            # print(self.buffers['actions'][rows, columns].shape)
+            # print(transitions['actions'].shape)
+
+            # import time
+            # time.sleep(100)
+
+            
             yield transitions
 
 

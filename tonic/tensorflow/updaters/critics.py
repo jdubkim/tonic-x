@@ -74,6 +74,7 @@ class DeterministicQLearning:
     def __call__(
         self, observations, actions, next_observations, rewards, discounts
     ):
+        print("DEBUG: ", next_observations)
         next_actions = self.model.target_actor(next_observations)
         next_values = self.model.target_critic(next_observations, next_actions)
         returns = rewards + discounts * next_values

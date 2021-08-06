@@ -35,6 +35,10 @@ class DictObservationEncoder(tf.keras.Model):
         self.keywords = keywords
         
     def call(self, observations):
+        # If observation is given as a batch, conver them into a dictionary of list
+        if isinstance(observations, list):
+            observations = {k: [dic[k] for dic in observations] for k in observations[0]}
+        
         if self.observation_normalizer:
             observations = self.observation_normalizer(observations)
 
@@ -52,6 +56,10 @@ class DictObservationActionEncoder(tf.keras.Model):
         self.keywords = keywords
 
     def call(self, observations, actions):
+        # If observation is given as a batch, conver them into a dictionary of list
+        if isinstance(observations, list):
+            observations = {k: [dic[k] for dic in observations] for k in observations[0]}
+
         if self.observation_normalizer:
             observations = self.observation_normalizer(observations)
 
