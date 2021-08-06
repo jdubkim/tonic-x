@@ -24,7 +24,8 @@ class Sequential:
         '''Used once to get the initial observations.'''
         observations = [env.reset() for env in self.environments]
         self.lengths = np.zeros(len(self.environments), int)
-        return np.array(observations, np.float32)
+
+        return observations
 
     def step(self, actions):
         next_observations = []  # Observations for the transitions.
@@ -50,9 +51,8 @@ class Sequential:
 
             observations.append(ob)
 
-        observations = np.array(observations, np.float32)
         infos = dict(
-            observations=np.array(next_observations, np.float32),
+            observations=next_observations,
             rewards=np.array(rewards, np.float32),
             resets=np.array(resets, np.bool),
             terminations=np.array(terminations, np.bool))

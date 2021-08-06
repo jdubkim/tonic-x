@@ -8,14 +8,14 @@ from tonic.tensorflow import agents, models, normalizers, updaters
 def default_model():
     return models.ActorCriticWithTargets(
         actor=models.Actor(
-            encoder=models.ObservationEncoder(),
+            encoder=models.DictObservationEncoder(),
             torso=models.MLP((256, 256), 'relu'),
             head=models.DeterministicPolicyHead()),
         critic=models.Critic(
-            encoder=models.ObservationActionEncoder(),
+            encoder=models.DictObservationActionEncoder(),
             torso=models.MLP((256, 256), 'relu'),
             head=models.ValueHead()),
-        observation_normalizer=normalizers.MeanStd())
+        observation_normalizer=normalizers.DictObservationNormalizer(normalizers.MeanStd))
 
 
 @gin.configurable
@@ -69,6 +69,7 @@ class DDPG(agents.Agent):
 
         # Prepare to update the normalizers.
         if self.model.observation_normalizer:
+            print(self.last_observations)
             self.model.observation_normalizer.record(self.last_observations)
         if self.model.return_normalizer:
             self.model.return_normalizer.record(rewards)

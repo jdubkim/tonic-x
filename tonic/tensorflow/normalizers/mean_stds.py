@@ -32,9 +32,11 @@ class MeanStd(tf.keras.Model):
         self._std = tf.Variable(self.std, trainable=False, name='std')
 
     def call(self, val):
+        print("DEBUG before: ", val)
         val = (val - self._mean) / self._std
         if self.clip is not None:
             val = tf.clip_by_value(val, -self.clip, self.clip)
+        print("DEBUG after: ", val)
         return val
 
     def unnormalize(self, val):

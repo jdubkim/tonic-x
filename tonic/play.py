@@ -152,7 +152,6 @@ def play(path='.', checkpoint='last', seed=10, agent=None, environment=None):
         tonic.logger.log('Not loading any weights')
 
     else:
-        print("DEBUG: ", path)
         checkpoint_path = os.path.join(path, 'checkpoints')
         if not os.path.isdir(checkpoint_path):
             tonic.logger.error(f'{checkpoint_path} is not a directory')

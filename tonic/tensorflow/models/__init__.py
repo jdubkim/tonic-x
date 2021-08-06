@@ -10,14 +10,16 @@ from .actors import SquashedMultivariateNormalDiag
 
 from .critics import Critic, DistributionalValueHead, ValueHead
 
-from .encoders import ObservationActionEncoder, ObservationEncoder
+from .encoders import ObservationActionEncoder, ObservationEncoder, \
+    DictObservationEncoder, DictObservationActionEncoder
 
 from .utils import default_dense_kwargs, MLP
 
 
 __all__ = [
     default_dense_kwargs, MLP, ObservationActionEncoder,
-    ObservationEncoder, SquashedMultivariateNormalDiag,
-    DetachedScaleGaussianPolicyHead, GaussianPolicyHead,
-    DeterministicPolicyHead, Actor, Critic, DistributionalValueHead,
-    ValueHead, ActorCritic, ActorCriticWithTargets, ActorTwinCriticWithTargets]
+    ObservationEncoder, DictObservationEncoder, DictObservationActionEncoder,
+    SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead, 
+    GaussianPolicyHead, DeterministicPolicyHead, Actor, Critic, 
+    DistributionalValueHead, ValueHead, ActorCritic, ActorCriticWithTargets, 
+    ActorTwinCriticWithTargets]

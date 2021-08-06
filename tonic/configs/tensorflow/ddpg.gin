@@ -4,9 +4,9 @@ import tonic.tensorflow
 
 # Train Settings
 AGENT = @DDPG()
-ENVIRONMENT = @Bullet
-Bullet.name = %environment_name
-environment_name = 'AntBulletEnv-v0'
+ENVIRONMENT = @Gym
+Gym.name = %environment_name
+environment_name = 'FetchPush-v1'
 
 trainer = @Trainer()
 NAME = None
@@ -20,7 +20,7 @@ after_training = None
 PATH = None
 
 # Agent Configurations
-DDPG.replay = @Buffer()
+DDPG.replay = @DictBuffer()
 DDPG.exploration = @NormalActionNoise()
 DDPG.actor_updater = @DeterministicPolicyGradient()
 DDPG.critic_updater = @DeterministicQLearning()
