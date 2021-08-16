@@ -4,23 +4,24 @@ import tonic.tensorflow
 
 # Train Settings
 AGENT = @TD3()
-ENVIRONMENT = @Bullet
-Bullet.name = %environment_name
-environment_name = 'AntBulletEnv-v0'
+ENVIRONMENT = @Gym
+Gym.name = %environment_name
+environment_name = 'FetchReach-v1'
+Gym.terminal_timeouts = True
 
 trainer = @Trainer()
 NAME = None
 sequential = 1
 parallel = 1
-seed = 10
+seed = 123
 
-before_training = None
+before_training = "agent.replay.set_reward_function(environment.environments[0].compute_reward)"
 after_training = None
 
 PATH = None
 
 # Agent Configurations
-TD3.replay = @Buffer()
+TD3.replay = @HerBuffer()
 TD3.exploration = @NormalActionNoise()
 TD3.actor_updater = @DeterministicPolicyGradient()
 TD3.critic_updater = @TwinCriticDeterministicQLearning()

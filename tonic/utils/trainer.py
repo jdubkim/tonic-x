@@ -2,6 +2,7 @@ import os
 import time
 
 import gin
+import gym
 import numpy as np
 
 from tonic import logger
@@ -13,7 +14,7 @@ class Trainer:
 
     def __init__(
         self, steps=int(5e6), epoch_steps=10000, save_steps=500000,
-        test_episodes=5, show_progress=True
+        test_episodes=10, show_progress=True
     ):
         self.max_steps = steps
         self.epoch_steps = epoch_steps
@@ -129,7 +130,6 @@ class Trainer:
         # Test loop.
         for _ in range(self.test_episodes):
             score, length = 0, 0
-
             while True:
                 # Select an action.
                 actions = self.agent.test_step(self.test_observations)
@@ -139,6 +139,8 @@ class Trainer:
                 # Take a step in the environment.
                 self.test_observations, infos = self.test_environment.step(
                     actions)
+                
+                env_infos = infos.pop('infos_')
                 self.agent.test_update(**infos)
 
                 score += infos['rewards'][0]
@@ -146,7 +148,11 @@ class Trainer:
 
                 if infos['resets'][0]:
                     break
-
+            
+            # Log the success_rate if the environment is GoalEnv 
+            if self.test_environment.is_type_of(gym.GoalEnv):
+                logger.store('test/is_success', env_infos[0]['is_success'], 
+                             stats=True)
             # Log the data.
             logger.store('test/episode_score', score, stats=True)
             logger.store('test/episode_length', length, stats=True)

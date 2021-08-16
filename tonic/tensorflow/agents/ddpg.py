@@ -29,12 +29,10 @@ class DDPG(agents.Agent):
         critic_updater=None
     ):
         self.model = model or default_model()
-        self.replay = replay or replays.Buffer()
-        self.exploration = exploration or explorations.NormalActionNoise()
-        self.actor_updater = actor_updater or \
-            updaters.DeterministicPolicyGradient()
-        self.critic_updater = critic_updater or \
-            updaters.DeterministicQLearning()
+        self.replay = replay
+        self.exploration = exploration
+        self.actor_updater = actor_updater
+        self.critic_updater = critic_updater
 
     def initialize(self, observation_space, action_space, seed=None):
         super().initialize(seed=seed)
@@ -60,12 +58,12 @@ class DDPG(agents.Agent):
         # Greedy actions for testing.
         return self._greedy_actions(observations).numpy()
 
-    def update(self, observations, rewards, resets, terminations):
+    def update(self, observations, rewards, resets, terminations, infos_):
         # Store the last transitions in the replay.
         self.replay.store(
             observations=self.last_observations, actions=self.last_actions,
             next_observations=observations, rewards=rewards, resets=resets,
-            terminations=terminations)
+            terminations=terminations, infos=infos_)
 
         # Prepare to update the normalizers.
         if self.model.observation_normalizer:
@@ -97,7 +95,6 @@ class DDPG(agents.Agent):
             for key in infos:
                 for k, v in infos[key].items():
                     logger.store(key + '/' + k, v.numpy())
-
         # Update the normalizers.
         if self.model.observation_normalizer:
             self.model.observation_normalizer.update()

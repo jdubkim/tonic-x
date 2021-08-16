@@ -4,6 +4,7 @@ import multiprocessing
 
 import gin
 import numpy as np
+from numpy.lib.arraysetops import isin
 
 
 class Sequential:
@@ -33,9 +34,10 @@ class Sequential:
         resets = []
         terminations = []
         observations = []  # Observations for the actions selection.
+        infos_ = []
 
         for i in range(len(self.environments)):
-            ob, rew, term, _ = self.environments[i].step(actions[i])
+            ob, rew, term, info = self.environments[i].step(actions[i])
 
             self.lengths[i] += 1
             # Timeouts trigger resets but are not true terminations.
@@ -50,12 +52,14 @@ class Sequential:
                 self.lengths[i] = 0
 
             observations.append(ob)
+            infos_.append(info)
 
         infos = dict(
             observations=next_observations,
             rewards=np.array(rewards, np.float32),
             resets=np.array(resets, np.bool),
-            terminations=np.array(terminations, np.bool))
+            terminations=np.array(terminations, np.bool),
+            infos_=infos_)
         return observations, infos
 
     def render(self, mode='human', *args, **kwargs):
@@ -66,6 +70,19 @@ class Sequential:
         if mode != 'human':
             return np.array(outs)
 
+    def is_type_of(self, type_class):
+
+        env = self.environments[0]
+        
+        # Extract environment wrappers
+        while True:
+            try:
+                env = env.env
+            except AttributeError:
+                break
+
+        return isinstance(env, type_class)
+        
 
 class Parallel:
     '''A group of sequential environments used in parallel.'''
@@ -154,6 +171,19 @@ class Parallel:
             resets=np.concatenate(self.resets_list),
             terminations=np.concatenate(self.terminations_list))
         return observations, infos
+
+    def is_type_of(self, type_class):
+
+        env = self.environments[0]
+        
+        # Extract environment wrappers
+        while True:
+            try:
+                env = env
+            except AttributeError:
+                break
+
+        return isinstance(env, type_class)
 
 
 @gin.configurable

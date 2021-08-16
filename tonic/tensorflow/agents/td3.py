@@ -7,14 +7,15 @@ from tonic.tensorflow import agents, models, normalizers, updaters
 def default_model():
     return models.ActorTwinCriticWithTargets(
         actor=models.Actor(
-            encoder=models.ObservationEncoder(),
+            encoder=models.DictObservationEncoder(),
             torso=models.MLP((256, 256), 'relu'),
             head=models.DeterministicPolicyHead()),
         critic=models.Critic(
-            encoder=models.ObservationActionEncoder(),
+            encoder=models.DictObservationActionEncoder(),
             torso=models.MLP((256, 256), 'relu'),
             head=models.ValueHead()),
-        observation_normalizer=normalizers.MeanStd())
+        observation_normalizer=
+        normalizers.DictObservationNormalizer(normalizers.MeanStd))
 
 
 @gin.configurable

@@ -1,17 +1,18 @@
 import numpy as np
-from numpy.lib.arraysetops import isin
-from tensorflow.python.keras.backend import normalize_batch_in_training
+import tensorflow as tf
 
 
-class ObservationNormalizer:
+class ObservationNormalizer(tf.keras.Model):
     def __init__(self, normalizer_class):
+        super(ObservationNormalizer, self).__init__()
         self.normalizer_class = normalizer_class
         
     def initialize(self, obs_shape):
         assert isinstance(obs_shape, tuple)
 
         self.obs_shape = obs_shape
-        self.observation_normalizer = self.normalizer_class(obs_shape)
+        self.observation_normalizer = self.normalizer_class()
+        self.observation_normalizer.initialize(obs_shape)
 
     def __call__(self, values):
         return self.observation_normalizer(values)
@@ -26,9 +27,10 @@ class ObservationNormalizer:
         self.observation_normalizer.update()
 
         
-class DictObservationNormalizer:
+class DictObservationNormalizer(tf.keras.Model):
     """ Stores a dict of observation normalizers for dictioanry observations."""
     def __init__(self, normalizer_class):
+        super(DictObservationNormalizer, self).__init__()
         self.normalizer_class = normalizer_class
     
     def initialize(self, obs_shape):

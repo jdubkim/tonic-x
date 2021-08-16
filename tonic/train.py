@@ -41,6 +41,8 @@ def train(agent, environment, trainer, before_training, after_training):
         if '.py' in before_training:
             exec(compile(open(before_training).read(),
                          before_training, 'exec'))
+        else:
+            exec(before_training)
 
     # Train.
     trainer.run()
@@ -50,6 +52,8 @@ def train(agent, environment, trainer, before_training, after_training):
         if '.py' in after_training:
             exec(compile(open(after_training).read(),
                          after_training, 'exec'))
+        else:
+            exec(after_training)
 
 
 def main(argv):
