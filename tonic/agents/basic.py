@@ -4,6 +4,7 @@ import gin
 import numpy as np
 
 from tonic import agents
+from tonic import utils
 
 
 @gin.configurable
@@ -25,7 +26,7 @@ class NormalRandom(agents.Agent):
         return self._policy(observations)
 
     def _policy(self, observations):
-        batch_size = len(observations)
+        batch_size = helpers.num_workers(observations)
         shape = (batch_size, self.action_size)
         return self.np_random.normal(self.loc, self.scale, shape)
 
@@ -45,7 +46,7 @@ class UniformRandom(agents.Agent):
         return self._policy(observations)
 
     def _policy(self, observations):
-        batch_size = len(observations)
+        batch_size = utils.num_workers(observations)
         shape = (batch_size, self.action_size)
         return self.np_random.uniform(-1, 1, shape)
 
@@ -74,14 +75,14 @@ class OrnsteinUhlenbeck(agents.Agent):
 
     def _train_policy(self, observations):
         if self.train_actions is None:
-            shape = (len(observations), self.action_size)
+            shape = (utils.num_workers(observations), self.action_size)
             self.train_actions = np.zeros(shape)
         self.train_actions = self._next_actions(self.train_actions)
         return self.train_actions
 
     def _test_policy(self, observations):
         if self.test_actions is None:
-            shape = (len(observations), self.action_size)
+            shape = (utils.num_workers(observations), self.action_size)
             self.test_actions = np.zeros(shape)
         self.test_actions = self._next_actions(self.test_actions)
         return self.test_actions
@@ -118,5 +119,5 @@ class Constant(agents.Agent):
         return self._policy(observations)
 
     def _policy(self, observations):
-        shape = (len(observations), self.action_size)
+        shape = (utils.num_workers(observations), self.action_size)
         return np.full(shape, self.constant)

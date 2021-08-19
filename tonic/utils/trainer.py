@@ -6,6 +6,7 @@ import gym
 import numpy as np
 
 from tonic import logger
+from tonic.utils import helpers
 
 
 @gin.configurable
@@ -22,14 +23,14 @@ class Trainer:
         self.test_episodes = test_episodes
         self.show_progress = show_progress
 
-    @gin.configurable
+    @gin.configurable(module='Trainer')
     def initialize(self, agent, environment, test_environment=None, seed=None):
         if seed is not None:
             environment.initialize(seed=seed)
 
         if test_environment and seed is not None:
             test_environment.initialize(seed=seed + 10000)
-
+        
         agent.initialize(
             observation_space=environment.observation_space,
             action_space=environment.action_space, seed=seed)
@@ -46,9 +47,10 @@ class Trainer:
         # Start the environments.
         observations = self.environment.start()
 
-        num_workers = len(observations)
-        scores = np.zeros(len(observations))
-        lengths = np.zeros(len(observations), int)
+        num_workers = helpers.num_workers(observations)
+        
+        scores = np.zeros(num_workers)
+        lengths = np.zeros(num_workers, int)
         steps, epoch_steps, epochs, episodes = 0, 0, 0, 0
         max_steps = np.ceil(self.max_steps / num_workers)
         if self.save_steps:
@@ -125,7 +127,7 @@ class Trainer:
         # Start the environment.
         if not hasattr(self, 'test_observations'):
             self.test_observations = self.test_environment.start()
-            assert len(self.test_observations) == 1
+            assert helpers.num_workers(self.test_observations) == 1
 
         # Test loop.
         for _ in range(self.test_episodes):

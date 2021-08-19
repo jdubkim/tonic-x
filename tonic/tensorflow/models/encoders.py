@@ -28,46 +28,39 @@ class ObservationActionEncoder(tf.keras.Model):
 
 @gin.configurable
 class DictObservationEncoder(tf.keras.Model):
+    @gin.configurable(module='DictObservationEncoder')
     def initialize(self, observation_normalizer=None, 
-                   keywords=['observation', 'desired_goal']):
-
+                   keywords=None):
+        assert keywords is not None
         self.observation_normalizer = observation_normalizer
         self.keywords = keywords
         
     def call(self, observations):
         # If observation is given as a list of dictionaries, 
         # convert them into a dictionary of lists
-        if isinstance(observations, list):
-            observations = {k: [dic[k] for dic in observations]
-                            for k in observations[0]}
-        
         if self.observation_normalizer:
             observations = self.observation_normalizer(observations)
 
         observations = [observations[keyword] for keyword in self.keywords]
-        observations = tf.concat(observations, axis=-1)
 
-        return observations
+        return tf.concat(observations, axis=-1)
 
 
 @gin.configurable
 class DictObservationActionEncoder(tf.keras.Model):
+    @gin.configurable(module='DictObservationActionEncoder')
     def initialize(self, observation_normalizer=None,
-                   keywords=['observation', 'desired_goal']):
+                   keywords=None):
+        assert keywords is not None
         self.observation_normalizer = observation_normalizer
         self.keywords = keywords
 
     def call(self, observations, actions):
-        # If observation is given as a list of dictionaries, 
-        # convert them into a dictionary of lists
-        if isinstance(observations, list):
-            observations = {k: [dic[k] for dic in observations] 
-                            for k in observations[0]}
 
         if self.observation_normalizer:
             observations = self.observation_normalizer(observations)
 
         observations = [observations[keyword] for keyword in self.keywords]
-        observations = tf.concat(observations, axis=-1)
+        observations.append(actions)
 
-        return tf.concat([observations, actions], axis=-1)
+        return tf.concat(observations, axis=-1)

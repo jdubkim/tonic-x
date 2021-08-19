@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from tonic import explorations, logger, replays
 from tonic.tensorflow import agents, models, normalizers, updaters
+from tonic.utils import helpers
 
 
 def default_model():
@@ -50,7 +51,7 @@ class DDPG(agents.Agent):
         # Keep some values for the next update.
         self.last_observations = observations.copy()
         self.last_actions = actions.copy()
-        self.steps += len(observations)
+        self.steps += helpers.num_workers(observations)
 
         return actions
 

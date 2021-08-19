@@ -4,9 +4,11 @@ import tonic.tensorflow
 
 # Train Settings
 AGENT = @DDPG()
-ENVIRONMENT = @Bullet
-Bullet.name = %environment_name
-environment_name = 'AntBulletEnv-v0'
+ENVIRONMENT = @ControlSuite
+ControlSuite.name = %environment_name
+environment_name = 'cartpole-swingup'
+
+ControlSuite.flatten=True
 
 trainer = @Trainer()
 NAME = None
@@ -26,5 +28,5 @@ DDPG.actor_updater = @DeterministicPolicyGradient()
 DDPG.critic_updater = @DeterministicQLearning()
 
 # Macros
-initialize.seed = %seed
+Trainer.initialize.seed = %seed
 Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

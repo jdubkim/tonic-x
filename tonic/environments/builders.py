@@ -86,6 +86,7 @@ def _flatten_observation(observation):
     return np.concatenate(observation, axis=0)
 
 
+@gin.configurable
 class ControlSuiteEnvironment(gym.core.Env):
     '''Turns a Control Suite environment into a Gym environment.'''
 
@@ -122,10 +123,10 @@ class ControlSuiteEnvironment(gym.core.Env):
 
     def step(self, action):
         time_step = self.environment.step(action)
+        observation = time_step.observation
+
         if self.flatten:
-            observation = _flatten_observation(time_step.observation)
-        else:
-            observation = time_step.observation
+            observation = _flatten_observation(observation)
 
         reward = time_step.reward
 

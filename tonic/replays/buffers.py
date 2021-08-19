@@ -39,6 +39,8 @@ class Buffer:
             continuations = np.float32(1 - kwargs['terminations'])
             kwargs['discounts'] = continuations * self.discount_factor
 
+        kwargs.pop('infos')
+
         # Create the named buffers.
         if self.buffers is None:
             self.num_workers = len(list(kwargs.values())[0])
@@ -105,18 +107,36 @@ class DictBuffer(Buffer):
                                         steps_before_batches, 
                                         steps_between_batches)
 
+    def _unpack_dict_observations(self, kwargs):
+        # Unpack observations
+        observations = kwargs.pop('observations')
+        for key in observations.keys():
+            kwargs[key] = observations[key]
+
+        # Store observation keys
+        self.observation_keys = observations.keys()
+
+        # Unpack next_observations
+        next_observations = kwargs.pop('next_observations')
+        for key in next_observations.keys():
+            kwargs['next_'+key] = next_observations[key]
+
+        return kwargs
+
     def store(self, **kwargs):
 
         if 'terminations' in kwargs:
             continuations = np.float32(1 - kwargs['terminations'])
             kwargs['discounts'] = continuations * self.discount_factor
 
-        kwargs = self.unzip_dict_observations(**kwargs)
         kwargs.pop('infos')
 
+        kwargs = self._unpack_dict_observations(kwargs)
+        
         # Create the named buffers.
         if self.buffers is None:
             self.num_workers = len(list(kwargs.values())[0])
+
             self.buffers = {}
             for key, val in kwargs.items():
                 shape = (self.max_size,) + np.array(val).shape
@@ -133,13 +153,9 @@ class DictBuffer(Buffer):
         self.index = (self.index + 1) % self.max_size
         self.size = min(self.size + 1, self.max_size)
         self.steps += 1
-        
 
     def get(self, *keys):
         '''Get batches from named buffers.'''
-        # if self.goal_selection_strategy == 'future':
-        #     pass
-
         for _ in range(self.batch_iterations):
             total_size = self.size * self.num_workers
             indices = self.np_random.randint(total_size, size=self.batch_size)
@@ -147,12 +163,15 @@ class DictBuffer(Buffer):
             columns = indices % self.num_workers
 
             transitions = {}
+
             for key in keys:
+                # Zip dictionary observations 
                 if key == 'observations':
                     transitions[key] = {
                         k: self.buffers[k][rows, columns] \
                             for k in self.observation_keys}
 
+                # Zip dictionary observations 
                 elif key == 'next_observations':
                     transitions[key] = {
                         k: self.buffers["next_" + k][rows, columns] \
@@ -162,32 +181,6 @@ class DictBuffer(Buffer):
 
             yield transitions
             
-    def unzip_dict_observations(self, **kwargs):
-        # Extract elements in dictionary observation
-        if 'observations' in kwargs:
-            obs = kwargs.pop('observations')
-            
-            # Store keys of observations
-            self.observation_keys = obs[0].keys()
-
-            for ob in obs:
-                for key, val in ob.items():
-                    try:
-                        kwargs[key].append(val)
-                    except KeyError:
-                        kwargs[key] = [val]
-
-        if 'next_observations' in kwargs:
-            obs = kwargs.pop('next_observations')
-            for ob in obs:
-                for key, val in ob.items():
-                    try:
-                        kwargs["next_"+key].append(val)
-                    except KeyError:
-                        kwargs["next_"+key] = [val]
-
-        return kwargs
-
 
 @gin.configurable
 class HerBuffer(DictBuffer):
@@ -195,7 +188,7 @@ class HerBuffer(DictBuffer):
         self, size=int(1e6), num_steps=1, batch_iterations=40, batch_size=256, 
         discount_factor=0.95, steps_before_batches=int(1e4)-1, 
         steps_between_batches=50, goal_selection_strategy='future',
-        n_sampled_goal=4, max_timesteps=50, reward_function=None,
+        replay_k=4, max_timesteps=50, reward_function=None,
         handle_timeout_termination=True
     ):
         super(HerBuffer, self).__init__(size, num_steps, batch_iterations,
@@ -204,13 +197,13 @@ class HerBuffer(DictBuffer):
                                         steps_between_batches)
         
         self.goal_selection_strategy = goal_selection_strategy
-        self.n_sampled_goal = n_sampled_goal
+        self.replay_k = replay_k 
 
         self.max_timesteps = max_timesteps
         self.max_n_episodes_stored = self.max_size // self.max_timesteps
 
         # compute ratio between HER replays and regular replays
-        self.her_ratio = 1 - (1.0 / (1 + self.n_sampled_goal))
+        self.her_ratio = 1 - (1.0 / (1 + self.replay_k))
 
         self.handle_timeout_termination = handle_timeout_termination
 
@@ -239,7 +232,7 @@ class HerBuffer(DictBuffer):
             continuations = np.float32(1 - kwargs['terminations'])
             kwargs['discounts'] = continuations * self.discount_factor
 
-        kwargs = self.unzip_dict_observations(**kwargs)
+        kwargs = self._unpack_dict_observations(kwargs)
         infos = kwargs.pop('infos')
 
         # Create the named buffers.

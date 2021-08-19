@@ -1,7 +1,7 @@
 import gin
 import torch
 
-from tonic import explorations, logger, replays  # noqa
+from tonic import explorations, logger, replays, helpers  # noqa
 from tonic.torch import agents, models, normalizers, updaters
 
 
@@ -52,7 +52,7 @@ class DDPG(agents.Agent):
         # Keep some values for the next update.
         self.last_observations = observations.copy()
         self.last_actions = actions.copy()
-        self.steps += len(observations)
+        self.steps += helpers.num_workers(observations)
 
         return actions
 

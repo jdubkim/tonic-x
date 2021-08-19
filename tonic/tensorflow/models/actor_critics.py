@@ -3,6 +3,8 @@ import copy
 import gin
 import tensorflow as tf
 
+from .utils import get_dummy_observations, get_observation_space
+
 
 @gin.configurable
 class ActorCritic(tf.keras.Model):
@@ -156,26 +158,3 @@ class ActorTwinCriticWithTargets(tf.keras.Model):
         for o, t in zip(self.online_variables, self.target_variables):
             t.assign((1 - self.target_coeff) * t + self.target_coeff * o)
 
-
-# TODO: Move these functions into other file
-def get_observation_space(observation_space):
-
-    if isinstance(observation_space, dict):
-        obs_shape = {k: v.shape for k, v in observation_space.spaces.items()}
-    elif isinstance(observation_space.sample(), dict):
-        obs_shape = {k: v.shape for k, v in observation_space.spaces.items()}
-    else:
-        obs_shape = observation_space.shape
-
-    return obs_shape
-
-
-# TODO: Move these functions into other file
-def get_dummy_observations(observation_shape):
-    if isinstance(observation_shape, dict):
-        dummy_observations = {k: tf.zeros((1,) + v) \
-            for k, v in observation_shape.items()}
-    else:
-        dummy_observations = tf.zeros((1,) + observation_shape)
-
-    return dummy_observations

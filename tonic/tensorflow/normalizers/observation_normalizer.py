@@ -1,7 +1,9 @@
+import gin
 import numpy as np
 import tensorflow as tf
 
 
+@gin.configurable
 class ObservationNormalizer(tf.keras.Model):
     def __init__(self, normalizer_class):
         super(ObservationNormalizer, self).__init__()
@@ -26,7 +28,8 @@ class ObservationNormalizer(tf.keras.Model):
     def update(self):
         self.observation_normalizer.update()
 
-        
+
+@gin.configurable
 class DictObservationNormalizer(tf.keras.Model):
     """ Stores a dict of observation normalizers for dictioanry observations."""
     def __init__(self, normalizer_class):
@@ -52,9 +55,8 @@ class DictObservationNormalizer(tf.keras.Model):
             for k, normalizer in self.observation_normalizer.items()}
 
     def record(self, values):
-        for value in values:
-            for k, val in value.items():
-                self.observation_normalizer[k].record(val)
+        for k, val in values.items():
+            self.observation_normalizer[k].record(val)
 
     def update(self):
         for normalizer in self.observation_normalizer.values():

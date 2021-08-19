@@ -67,11 +67,3 @@ def test_dict_buffer_get():
     for batch in dictbuffer.get(*keys):
         _batch = dict(batch)
         _batch['observations'] = OrderedDict(_batch['observations'])
-
-        print(_batch)
-        print()
-        print(kwargs)
-
-        assert _batch == kwargs
-
-test_dict_buffer_get()

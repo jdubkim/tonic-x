@@ -24,6 +24,9 @@ class Sequential:
     def start(self):
         '''Used once to get the initial observations.'''
         observations = [env.reset() for env in self.environments]
+        if isinstance(observations[0], dict):
+            observations = self._preprocess_dict_obs(observations)
+
         self.lengths = np.zeros(len(self.environments), int)
 
         return observations
@@ -54,6 +57,10 @@ class Sequential:
             observations.append(ob)
             infos_.append(info)
 
+        if isinstance(ob, dict):
+            observations = self._preprocess_dict_obs(observations)
+            next_observations = self._preprocess_dict_obs(next_observations)
+
         infos = dict(
             observations=next_observations,
             rewards=np.array(rewards, np.float32),
@@ -70,6 +77,10 @@ class Sequential:
         if mode != 'human':
             return np.array(outs)
 
+    def compute_reward(self):
+        return self.environments[0].compute_reward
+        
+
     def is_type_of(self, type_class):
 
         env = self.environments[0]
@@ -82,6 +93,11 @@ class Sequential:
                 break
 
         return isinstance(env, type_class)
+
+    def _preprocess_dict_obs(self, observations):
+        
+        return {key: [dic[key] for dic in observations] 
+                for key in observations[0].keys()}
         
 
 class Parallel:
@@ -112,7 +128,7 @@ class Parallel:
                 out = envs.step(actions)
                 self.output_queue.put((index, out))
 
-        dummy_environment = self.environment_builder
+        dummy_environment = self.environment_builder()
         self.observation_space = dummy_environment.observation_space
         self.action_space = dummy_environment.action_space
         del dummy_environment
@@ -140,8 +156,15 @@ class Parallel:
             index, observations = self.output_queue.get()
             observations_list[index] = observations
 
-        self.observations_list = np.array(observations_list)
-        self.next_observations_list = np.zeros_like(self.observations_list)
+        if isinstance(observations, dict):
+            self.observations_list = self._preprocess_dict_obs(
+                observations_list)
+            self.next_observations_list = self._preprocess_dict_obs(
+                np.zeros_like(self.observations_list))
+        else:
+            self.observations_list = np.array(observations_list)
+            self.next_observations_list = np.zeros_like(self.observations_list)
+
         self.rewards_list = np.zeros(
             (self.worker_groups, self.workers_per_group), np.float32)
         self.resets_list = np.zeros(
@@ -172,6 +195,10 @@ class Parallel:
             terminations=np.concatenate(self.terminations_list))
         return observations, infos
 
+    def compute_reward(self):
+        dummy_environment = self.environment_builder()
+        return dummy_environment.compute_reward
+
     def is_type_of(self, type_class):
 
         env = self.environments[0]
@@ -179,11 +206,21 @@ class Parallel:
         # Extract environment wrappers
         while True:
             try:
-                env = env
+                env = env.env
             except AttributeError:
                 break
 
         return isinstance(env, type_class)
+
+    def _preprocess_dict_obs(self, observations):
+
+        dict_obs = {k: [] for k in observations[0].keys()}
+        
+        for key in observations[0].keys():
+            for dic in observations:
+                dict_obs[key].append(dic[key])
+
+        return dict_obs
 
 
 @gin.configurable
