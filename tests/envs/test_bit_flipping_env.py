@@ -2,7 +2,7 @@ from gym import spaces
 import numpy as np
 import pytest
 
-from common.envs import BitFlippingEnv
+from tonic.environments.simple_envs import BitFlippingEnv
 
 
 def test_env_init():
@@ -15,7 +15,7 @@ def test_env_init():
     
 
 def test_env_discrete_action():
-    env = BitFlippingEnv(n_bits=10)
+    env = BitFlippingEnv(n_bits=10, continuous=False)
     obs = env.reset()
 
     assert isinstance(env.action_space, spaces.Discrete)
@@ -75,5 +75,5 @@ def test_return_is_success_correctly():
     obs, r, done, info = env.step(action)
 
     assert info['is_success'] == 1
-    assert r >= 0
+    assert r == 0
     assert done

@@ -8,14 +8,15 @@ def default_model():
     return models.ActorTwinCriticWithTargets(
         actor=models.Actor(
             encoder=models.DictObservationEncoder(),
-            torso=models.MLP((256, 256), 'relu'),
+            torso=models.MLP((256, 256), 'tanh'),
             head=models.DeterministicPolicyHead()),
         critic=models.Critic(
             encoder=models.DictObservationActionEncoder(),
             torso=models.MLP((256, 256), 'relu'),
             head=models.ValueHead()),
         observation_normalizer=
-        normalizers.DictObservationNormalizer(normalizers.MeanStd))
+        normalizers.DictObservationNormalizer(normalizers.MeanStd),
+        target_coeff=0.05)
 
 
 @gin.configurable

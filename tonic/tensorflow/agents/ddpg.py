@@ -10,13 +10,14 @@ def default_model():
     return models.ActorCriticWithTargets(
         actor=models.Actor(
             encoder=models.DictObservationEncoder(),
-            torso=models.MLP((256, 256), 'relu'),
+            torso=models.MLP((256, 256, 256), 'tanh'),
             head=models.DeterministicPolicyHead()),
         critic=models.Critic(
             encoder=models.DictObservationActionEncoder(),
-            torso=models.MLP((256, 256), 'relu'),
+            torso=models.MLP((256, 256, 256), 'relu'),
             head=models.ValueHead()),
-        observation_normalizer=normalizers.DictObservationNormalizer(normalizers.MeanStd))
+        observation_normalizer=normalizers.DictObservationNormalizer(normalizers.MeanStd),
+        target_coeff=0.05)
 
 
 @gin.configurable
@@ -74,7 +75,7 @@ class DDPG(agents.Agent):
 
         # Update the model if the replay is ready.
         if self.replay.ready():
-            self._update()
+            self._update(resets)
 
         self.exploration.update(resets)
 
@@ -85,12 +86,13 @@ class DDPG(agents.Agent):
     def _policy(self, observations):
         return self._greedy_actions(observations).numpy()
 
-    def _update(self):
+    def _update(self, resets):
         keys = ('observations', 'actions', 'next_observations', 'rewards',
                 'discounts')
 
         # Update both the actor and the critic multiple times.
         for batch in self.replay.get(*keys):
+            assert resets[0]
             infos = self._update_actor_critic(**batch)
 
             for key in infos:

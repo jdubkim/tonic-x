@@ -78,6 +78,7 @@ class Sequential:
             return np.array(outs)
 
     def compute_reward(self):
+        """ Returns a reward function of an environment. """
         return self.environments[0].compute_reward
         
 

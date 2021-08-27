@@ -6,6 +6,7 @@ import gym.wrappers
 import numpy as np
 
 from tonic import environments
+from tonic.environments import simple_envs
 
 
 @gin.configurable
@@ -38,6 +39,16 @@ def ControlSuite(*args, **kwargs): # noqa
         environment = ControlSuiteEnvironment(
             domain_name=domain, task_name=task, *args, **kwargs)
         return gym.wrappers.TimeLimit(environment, 1000)
+
+    return build_environment(_builder, *args, **kwargs)
+
+
+@gin.configurable
+def SimpleEnv(*args, **kwargs):
+    
+    def _builder(name, *args, **kwargs):
+        environment = simple_envs.make_env(name, *args, **kwargs)
+        return gym.wrappers.TimeLimit(environment, environment.max_timesteps)
 
     return build_environment(_builder, *args, **kwargs)
 
