@@ -1,0 +1,35 @@
+import gin.tf.external_configurables
+
+import tonic.tensorflow
+
+# Train Settings
+AGENT = @DDPG()
+ENVIRONMENT = @Gym
+Gym.name = %environment_name
+environment_name = 'FetchPush-v1'
+
+trainer = @Trainer()
+NAME = 'DDPG+HER'
+sequential = 1
+parallel = 4
+seed = 0
+
+before_training = 'agent.replay.set_reward_function(environment.compute_reward)'
+after_training = None
+
+PATH = None
+
+# Agent Configurations
+DDPG.replay = @HerBuffer()
+DDPG.exploration = @NormalActionNoise()
+DDPG.actor_updater = @DeterministicPolicyGradient()
+DDPG.critic_updater = @DeterministicQLearning()
+
+DictObservationEncoder.initialize.keywords = ['observation', 'desired_goal']
+DictObservationActionEncoder.initialize.keywords = ['observation', 'desired_goal']
+
+MeanStd.clip = 5
+
+# Macros
+Trainer.initialize.seed = %seed
+Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

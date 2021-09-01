@@ -63,7 +63,6 @@ def test_dict_buffer_store_one_step(seed):
         rewards=infos['rewards'],
         resets=infos['resets'],
         terminations=infos['terminations'],
-        infos=infos['infos_']
     )
 
     # Buffer should now be created
@@ -136,7 +135,6 @@ def test_dict_buffer_store_multi_steps(seed, n_steps=10):
             'rewards': infos['rewards'],
             'terminations': infos['terminations'],
             'resets': infos['resets'],
-            'infos': infos['infos_']
         }
 
         # Store an item into dictionary buffer.

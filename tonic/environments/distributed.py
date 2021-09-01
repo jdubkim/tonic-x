@@ -37,7 +37,7 @@ class Sequential:
         resets = []
         terminations = []
         observations = []  # Observations for the actions selection.
-        infos_ = []
+        environment_infos = []
 
         for i in range(len(self.environments)):
             ob, rew, term, info = self.environments[i].step(actions[i])
@@ -49,13 +49,13 @@ class Sequential:
             rewards.append(rew)
             resets.append(reset)
             terminations.append(term)
+            environment_infos.append(info)
 
             if reset:
                 ob = self.environments[i].reset()
                 self.lengths[i] = 0
 
             observations.append(ob)
-            infos_.append(info)
 
         if isinstance(ob, dict):
             observations = self._preprocess_dict_obs(observations)
@@ -66,7 +66,7 @@ class Sequential:
             rewards=np.array(rewards, np.float32),
             resets=np.array(resets, np.bool),
             terminations=np.array(terminations, np.bool),
-            infos_=infos_)
+            environment_infos=environment_infos)
         return observations, infos
 
     def render(self, mode='human', *args, **kwargs):
@@ -77,6 +77,7 @@ class Sequential:
         if mode != 'human':
             return np.array(outs)
 
+    @property
     def compute_reward(self):
         """ Returns a reward function of an environment. """
         return self.environments[0].compute_reward
@@ -158,10 +159,8 @@ class Parallel:
             observations_list[index] = observations
 
         if isinstance(observations, dict):
-            self.observations_list = self._preprocess_dict_obs(
-                observations_list)
-            self.next_observations_list = self._preprocess_dict_obs(
-                np.zeros_like(self.observations_list))
+            self.observations_list = observations_list
+            self.next_observations_list = observations_list
         else:
             self.observations_list = np.array(observations_list)
             self.next_observations_list = np.zeros_like(self.observations_list)
@@ -172,8 +171,11 @@ class Parallel:
             (self.worker_groups, self.workers_per_group), np.bool)
         self.terminations_list = np.zeros(
             (self.worker_groups, self.workers_per_group), np.bool)
+        self.environment_infos_list = [
+            [None for _ in range(self.workers_per_group)] 
+            for _ in range(self.worker_groups)]
 
-        return np.concatenate(self.observations_list)
+        return self.get_observations_batch(observations)
 
     def step(self, actions):
         actions_list = np.split(actions, self.worker_groups)
@@ -187,23 +189,32 @@ class Parallel:
             self.rewards_list[index] = infos['rewards']
             self.resets_list[index] = infos['resets']
             self.terminations_list[index] = infos['terminations']
+            self.environment_infos_list[index] = infos['environment_infos']
 
-        observations = np.concatenate(self.observations_list)
+        observations_ = observations.copy()
+        observations = self.get_observations_batch(observations)
+
         infos = dict(
-            observations=np.concatenate(self.next_observations_list),
+            observations=self.get_observations_batch(observations_),
             rewards=np.concatenate(self.rewards_list),
             resets=np.concatenate(self.resets_list),
-            terminations=np.concatenate(self.terminations_list))
+            terminations=np.concatenate(self.terminations_list),
+            environment_infos=sum(self.environment_infos_list, []))
         return observations, infos
 
+    def get_observations_batch(self, dummy_observation):
+        if isinstance(dummy_observation, dict):
+            return self._preprocess_dict_obs(self.observations_list)
+        else:
+            return np.concatenate(self.observations_list)
+
+    @property
     def compute_reward(self):
         dummy_environment = self.environment_builder()
         return dummy_environment.compute_reward
 
     def is_type_of(self, type_class):
-
         env = self.environments[0]
-        
         # Extract environment wrappers
         while True:
             try:
@@ -214,12 +225,21 @@ class Parallel:
         return isinstance(env, type_class)
 
     def _preprocess_dict_obs(self, observations):
-
         dict_obs = {k: [] for k in observations[0].keys()}
         
         for key in observations[0].keys():
             for dic in observations:
-                dict_obs[key].append(dic[key])
+                for obs in dic[key]:
+                    dict_obs[key].append(obs)
+
+        return dict_obs
+
+    def _preprocess_dict_next_obs(self, observations):
+        dict_obs = {k: [] for k in observations[0].keys()}
+        
+        for key in observations[0].keys():
+            for dic in observations:
+                dict_obs[key].append(np.zeros_like(dic[key]))
 
         return dict_obs
 

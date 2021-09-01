@@ -1,3 +1,4 @@
+from os import environ
 import gin
 import tensorflow as tf
 
@@ -60,12 +61,12 @@ class DDPG(agents.Agent):
         # Greedy actions for testing.
         return self._greedy_actions(observations).numpy()
 
-    def update(self, observations, rewards, resets, terminations, infos_):
+    def update(self, observations, rewards, resets, terminations, environment_infos):
         # Store the last transitions in the replay.
         self.replay.store(
             observations=self.last_observations, actions=self.last_actions,
             next_observations=observations, rewards=rewards, resets=resets,
-            terminations=terminations, infos=infos_)
+            terminations=terminations, environment_infos=environment_infos)
 
         # Prepare to update the normalizers.
         if self.model.observation_normalizer:
@@ -75,7 +76,7 @@ class DDPG(agents.Agent):
 
         # Update the model if the replay is ready.
         if self.replay.ready():
-            self._update(resets)
+            self._update()
 
         self.exploration.update(resets)
 
@@ -86,13 +87,12 @@ class DDPG(agents.Agent):
     def _policy(self, observations):
         return self._greedy_actions(observations).numpy()
 
-    def _update(self, resets):
+    def _update(self):
         keys = ('observations', 'actions', 'next_observations', 'rewards',
                 'discounts')
 
         # Update both the actor and the critic multiple times.
         for batch in self.replay.get(*keys):
-            assert resets[0]
             infos = self._update_actor_critic(**batch)
 
             for key in infos:

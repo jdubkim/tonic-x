@@ -14,10 +14,9 @@ batch_size = 1
 batch_iterations = 1
 
 
-# Dictionary Buffer
-herbuffer = HerBuffer(batch_size=batch_size, 
-                        batch_iterations=batch_iterations,
-                        max_timesteps=10)
+# Her Buffer
+herbuffer = HerBuffer(batch_size=batch_size, batch_iterations=batch_iterations,
+                      max_timesteps=10)
 
 
 def test_her_buffer_initialise():
@@ -66,7 +65,6 @@ def test_her_buffer_store_one_step(seed):
         rewards=infos['rewards'],
         resets=infos['resets'],
         terminations=infos['terminations'],
-        infos=infos['infos_']
     )
 
     # Buffer should now be created
@@ -152,7 +150,6 @@ def test_her_buffer_store_multi_steps(seed, n_steps=10):
             'rewards': infos['rewards'],
             'terminations': infos['terminations'],
             'resets': infos['resets'],
-            'infos': infos['infos_']
         }
 
         # Store an item into dictionary buffer.

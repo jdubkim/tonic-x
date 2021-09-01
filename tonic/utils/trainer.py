@@ -139,10 +139,9 @@ class Trainer:
                 logger.store('test/action', actions, stats=True)
 
                 # Take a step in the environment.
-                self.test_observations, infos = self.test_environment.step(
-                    actions)
-                
-                env_infos = infos.pop('infos_')
+                self.test_observations, infos = self.test_environment.step(actions)
+                env_infos = infos.pop('environment_infos')
+
                 self.agent.test_update(**infos)
 
                 score += infos['rewards'][0]

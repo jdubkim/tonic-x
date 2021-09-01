@@ -130,7 +130,7 @@ class DictBuffer(Buffer):
             continuations = np.float32(1 - kwargs['terminations'])
             kwargs['discounts'] = continuations * self.discount_factor
 
-        kwargs.pop('infos')
+        kwargs.pop('environment_infos')
 
         kwargs = self._unpack_dict_observations(kwargs)
         
@@ -169,8 +169,8 @@ class DictBuffer(Buffer):
                 # Zip dictionary observations 
                 if key == 'observations':
                     transitions[key] = {
-                        k: self.buffers[k][rows, columns] \
-                            for k in self.observation_keys}
+                        k: self.buffers[k][rows, columns] 
+                        for k in self.observation_keys}
 
                 # Zip dictionary observations 
                 elif key == 'next_observations':
@@ -184,47 +184,44 @@ class DictBuffer(Buffer):
 
 
 @gin.configurable
-class HerBufferOptim(DictBuffer):
+class HerBuffer(DictBuffer):
     def __init__(
-        self, size=int(1e6), num_steps=1, batch_iterations=40,
-        batch_size=2048, discount_factor=0.95,
-        steps_before_batches=int(1e4), steps_between_batches=50,
-        goal_selection_strategy='future', replay_k=4,
-        max_timesteps=50, reward_function=None,
-        handle_timeout_termination=False
-    ):
-        super(HerBufferOptim, self).__init__(size, num_steps, batch_iterations,
+        self, size=int(1e6), num_steps=1, batch_iterations=40, batch_size=512,
+        discount_factor=0.98, steps_before_batches=int(1e4),
+        steps_between_batches=50, goal_selection_strategy='future',
+        replay_k=4, reward_function=None):
+
+        super(HerBuffer, self).__init__(size, num_steps, batch_iterations,
                                         batch_size, discount_factor,
                                         steps_before_batches, 
                                         steps_between_batches)
-        
+
         self.goal_selection_strategy = goal_selection_strategy
         self.replay_k = replay_k
 
-        # compute ratio between HER replays and regular replays
-        self.her_ratio = 1 - (1.0 / (1 + self.replay_k))
-
-        self.handle_timeout_termination = handle_timeout_termination
-
         self.reward_function = reward_function
+
+        # Ratio between HER replays and regular replays
+        self.her_ratio = 1 - (1.0 / (1 + self.replay_k))
 
     def initialize(self, seed):
         super().initialize(seed)
         self.full = False
-    
+
     def set_reward_function(self, reward_function):
+        assert reward_function is not None
         self.reward_function = reward_function
 
     def store(self, **kwargs):
 
+        kwargs.pop('environment_infos')
+        
         if 'terminations' in kwargs:
             continuations = np.float32(1 - kwargs['terminations'])
             kwargs['discounts'] = continuations * self.discount_factor
 
         # Unpack dictionary observations
         kwargs = self._unpack_dict_observations(kwargs)
-
-        infos = kwargs.pop('infos')
 
         # Create the named buffers
         if self.buffers is None:
@@ -234,343 +231,117 @@ class HerBufferOptim(DictBuffer):
                 shape = (self.max_size, ) + np.array(val).shape
                 self.buffers[key] = np.full(shape, np.nan, np.float32)
 
-            # Create a list to store indices of episodes
+            self.buffers['episode_n'] = np.full(
+                (self.max_size, self.num_workers), np.nan, np.int)
+
             self.episode_reset_indices = [[] for _ in range(self.num_workers)]
+            self.episodes_n = np.zeros((self.num_workers), dtype=np.int)
+            self.reset_index = [False for _ in range(self.num_workers)]
 
         # Store the new values.
         for key, val in kwargs.items():
             self.buffers[key][self.index] = val
+        
+        # Store the episode of the current timestep.
+        self.buffers['episode_n'][self.index] = self.episodes_n
 
         # Accumulate values for n-step returns.
         if self.num_steps > 1:
             self.accumulate_n_steps(kwargs)
 
-        self.index = (self.index + 1) % self.max_size
+        self.index = self.index + 1
         self.size = min(self.size + 1, self.max_size)
+        self.full = (self.size == self.max_size)
         self.steps += 1
 
+        if self.index >= self.max_size:
+            self.index = self.index % self.max_size
+            self.reset_index = [True for _ in range(self.num_workers)] 
+
+        # Store the timestep and increment episode_n if the environment resets
         for i, reset in enumerate(kwargs['resets']):
             if reset:
-                self.store_episode(i)
+                if self.episodes_n[i] < len(self.episode_reset_indices[i]):
+                    self.episode_reset_indices[i][self.episodes_n[i]] = \
+                        self.index
+                else:
+                    self.episode_reset_indices[i].append(self.index)
 
-    def store_episode(self, env_id):
-        self.episode_reset_indices[env_id].append(self.steps)
-
-    @property
-    def n_episodes_stored(self):
-        return len(self.episode_reset_indices[0])
+                # Reset episode_n if the buffer is full and the last episode terminates.
+                if self.full and self.reset_index[i]:
+                        self.episodes_n[i] = 0
+                        self.reset_index[i] = False
+                else:
+                    self.episodes_n[i] += 1
 
     def get(self, *keys):
         '''Get batches from named buffers.'''
         for _ in range(self.batch_iterations):
-            sampled_transitions = self.sample_transitions()
-
+            unzipped_transitions = self.sample_transitions()
             transitions = {}
             for key in keys:
-                # Pack dictionary observations
+                # Zip dictionary observations
                 if key == 'observations':
-                    transitions[key] = {k: sampled_transitions[k][:, 0]
+                    transitions[key] = {k: unzipped_transitions[k]
                                         for k in self.observation_keys}
-                # Pack dictionary observations
                 elif key == 'next_observations':
-                    transitions[key] = {k: sampled_transitions["next_"+k][:, 0]
-                                        for k in self.observation_keys}
+                    transitions[key] = {k: 
+                        unzipped_transitions['next_'+k]
+                        for k in self.observation_keys}
                 else:
-                    transitions[key] = sampled_transitions[key][:, 0]
+                    transitions[key] = unzipped_transitions[key]
 
             yield transitions
-
-    def sample_episodes_indices(self):
-        n_episodes = sum(len(episodes) 
-                         for episodes in self.episode_reset_indices)
-        n_episodes_per_env = np.array([len(episodes) 
-                              for episodes in self.episode_reset_indices])
-        n_episodes_acc = np.array([sum(n_episodes_per_env[:i+1]) 
-                          for i in range(len(n_episodes_per_env))])
-        episodes_env = np.array([sum([[i for _ in episode] for (i, episode) in \
-            enumerate(self.episode_reset_indices)], [])])
-        
-        # Randomly select episodes to use.
-        episode_indices = self.np_random.randint(0, n_episodes, self.batch_size)
-
-        def index_1d_to_2d(index_1d, episode_env):
-            pos = index_1d - n_episodes_acc[episode_env]
-
-            return (episode_env, pos)
-
-        # Calculate which environment these episodes belong to.
-        episodes_indices_2d = [index_1d_to_2d(index, env_id) for index, env_id \
-            in zip(episode_indices, episodes_env)]
-
-        return episodes_indices_2d
-
-    def sample_timesteps_indices(self, episodes_indices):
-
-        # Get timesteps for each episode.
-        episode_reset_indices_ = [[] for _ in range(len(self.episode_reset_indices))]
-        for i in range(len(self.episode_reset_indices)):
-            episode_reset_indices_[i].append([0] + self.episode_reset_indices[i][1:])
-
-        episode_lengths = np.array(self.episode_reset_indices) - \
-            np.array(episode_reset_indices_)
-
-        rand = self.np_random.random(len(episodes_indices[0]))
-
-        print("DEBUG: ")
-        print("episode length: ", episode_lengths)
-        print("episode indices: ", episodes_indices)
-        print("rand: ", rand)
-        
-        return np.floor(episode_lengths[episodes_indices] * rand, dtype=np.int)
-
-    def convert_to_buffer_indices(self, episode_indices, timestep_indices):
-        
-        def episode_to_timestep(episode):
-            if episode == 0:
-                return 0
-            return self.episode_reset_indices[episode-1]
-
-        return [(episode_to_timestep(episode) + timestep, env_id) 
-         for (episode, env_id), timestep in \
-             zip(episode_indices, timestep_indices)]
 
     def sample_transitions(self):
-        # Sample episodes and timesteps
-        episodes_indices = self.sample_episodes_indices()
-        her_indices = \
+        # Sample timesteps
+        total_size = self.size * self.num_workers
+        indices = self.np_random.randint(total_size, size=self.batch_size)
+        rows = indices // self.num_workers
+        columns = indices % self.num_workers
+
+        batch_her_proportion = \
             np.arange(self.batch_size)[: int(self.her_ratio * self.batch_size)]
-        timestep_indices = self.sample_timesteps_indices(episodes_indices)
+
+        # Indices to replace goals (HER)
+        her_rows = indices[batch_her_proportion] // self.num_workers
+        her_columns = indices[batch_her_proportion] % self.num_workers
+
+        samples = {key: self.buffers[key][rows, columns].copy() 
+                   for key in self.buffers.keys()}
+
+        her_goals = self.sample_goals(her_rows, her_columns)
         
-        buffer_indices = self.convert_to_buffer_indices(
-            episodes_indices, timestep_indices)
+        samples['desired_goal'][batch_her_proportion] = her_goals
+        samples['next_desired_goal'][batch_her_proportion] = her_goals
+
+        # Recalculate rewards based on a new goal
+        samples['rewards'][batch_her_proportion] = self.reward_function(
+            samples['next_achieved_goal'][batch_her_proportion],
+            samples['desired_goal'][batch_her_proportion],
+            None
+        )
+
+        return samples
+
+    def sample_goals(self, her_rows, her_columns):
         
-        transitions = {key: self.buffers[key][buffer_indices].copy()
-                       for key in self.buffers.keys()}
+        episode_n = self.buffers['episode_n'][her_rows, her_columns]
 
-        new_goals = self.sample_goals(episodes_indices, her_indices, 
-                                      timestep_indices)
+        reset_indices = [self.episode_reset_indices[env][n_ep]
+                         for (n_ep, env) in zip(episode_n, her_columns)]
+        # Add self.size if reset_index is lower than the start timestep (her_rows)
+        reset_indices = np.array([index + (self.size if index < row else 0) 
+                         for (row, index) in zip(her_rows, reset_indices)])
 
-        transitions["desired_goal"][her_indices] = new_goals
-
-        if len(her_indices) > 0:
-            transitions["rewards"][her_indices, 0] = self.reward_function(
-                transitions["next_achieved_goal"][her_indices, 0],
-                transitions["desired_goal"][her_indices, 0],
-                None
-            )
-
-        return transitions
-
-    def sample_goals(self, episodes_indices, her_indices, timestep_indices):
-        her_episode_indices = episodes_indices[her_indices]
-
-        episode_lengths = list(map(lambda x,y: x-y, self.episode_reset_indices,
-                        [0] + self.episode_reset_indices[1:]))
-
-        # replay with k random states from the episodes after current transitions
         if self.goal_selection_strategy == 'future':
-            transitions_indices = self.np_random.randint(
-                timestep_indices[her_indices] + 1,
-                episode_lengths[her_episode_indices]
-            )
-        # replay with final state of the episodes
+            her_indices = self.np_random.randint(her_rows, reset_indices) % self.size
         elif self.goal_selection_strategy == 'final':
-            transitions_indices = episode_lengths[her_episode_indices] - 1
-        # replay with random state of the episodes
+            her_indices = reset_indices - 1
         elif self.goal_selection_strategy == 'episode':
-            transitions_indices = self.np_random.randint(
-                episode_lengths[her_episode_indices]
-            )
+            her_indices = self.np_random.randint(reset_indices)
         else:
-            raise ValueError(f"Strategy {self.goal_selection_strategy}" +
-                             "for sampling goals not supported!")
+            raise ValueError(f"{self.goal_selection_strategy} goal selection" +
+                             "strategy is not supported.")
 
-        buffer_indices = self.convert_to_buffer_indices(
-            her_episode_indices, transitions_indices)
-
-        return self.buffers["achieved_goal"][buffer_indices]
-        
-
-@gin.configurable
-class HerBuffer(DictBuffer):
-    def __init__(
-        self, size=int(1e6), num_steps=1, batch_iterations=40, batch_size=256, 
-        discount_factor=0.98, steps_before_batches=int(5e4), 
-        steps_between_batches=50, goal_selection_strategy='future',
-        replay_k=4, max_timesteps=50, reward_function=None,
-        handle_timeout_termination=False
-    ):
-        super(HerBuffer, self).__init__(size, num_steps, batch_iterations,
-                                        batch_size, discount_factor,
-                                        steps_before_batches, 
-                                        steps_between_batches)
-        
-        self.goal_selection_strategy = goal_selection_strategy
-        self.replay_k = replay_k 
-
-        self.max_timesteps = max_timesteps
-        self.max_n_episodes_stored = self.max_size // self.max_timesteps
-
-        # compute ratio between HER replays and regular replays
-        self.her_ratio = 1 - (1.0 / (1 + self.replay_k))
-
-        self.handle_timeout_termination = handle_timeout_termination
-
-        self.reward_function = reward_function
-
-    def initialize(self, seed):
-        super().initialize(seed)
-        self.pos = 0
-        self.episode_index = 0
-        self.full = False
-        self.episode_lengths = np.zeros(self.max_n_episodes_stored, 
-                                        dtype=np.int64)
-
-    def set_reward_function(self, reward_function, reward_normalizer=None):
-        assert reward_function is not None
-        self.reward_function = reward_function
-        self.reward_normalizer = reward_normalizer
-
-    def store(self, **kwargs):
-
-        if 'terminations' in kwargs:
-            continuations = np.float32(1 - kwargs['terminations'])
-            kwargs['discounts'] = continuations * self.discount_factor
-
-        kwargs = self._unpack_dict_observations(kwargs)
-        infos = kwargs.pop('infos')
-
-        # Create the named buffers.
-        if self.buffers is None:
-            self.num_workers = len(list(kwargs.values())[0])
-            self.buffers = {}
-            for key, val in kwargs.items():
-                shape = (self.max_n_episodes_stored, self.max_timesteps, ) + \
-                    np.array(val).shape
-                self.buffers[key] = np.full(shape, np.nan, np.float32)
-
-        # Store the new values.
-        for key, val in kwargs.items():
-            self.buffers[key][self.pos, self.episode_index] = val
-
-        # Accumulate values for n-step returns.
-        if self.num_steps > 1:
-            self.accumulate_n_steps(kwargs)
-
-        self.episode_index += 1
-        self.steps += 1
-        self.size = min(self.size + 1, self.max_size)
-
-        done = False
-        for i in range(self.num_workers):
-            if kwargs['resets'][i]:
-                done = True
-
-        if done or self.episode_index >= self.max_timesteps:
-            self.next_episode()
-        
-    def next_episode(self):
-
-        self.episode_lengths[self.pos] = self.episode_index
-        
-        self.pos += 1
-        if self.pos == self.max_n_episodes_stored:
-            self.full = True
-            self.pos = 0
-
-        self.episode_index = 0
-
-    @property
-    def n_episodes_stored(self):
-        if self.full:
-            return self.max_n_episodes_stored
-        return self.pos
-
-    def get(self, *keys):
-        '''Get batches from named buffers.'''
-
-        for _ in range(self.batch_iterations):
-            temp_buffers = {}
-            for key in self.buffers.keys():
-                temp_buffers[key] = self.buffers[key][:self.n_episodes_stored]
-            sampled_transitions = self.sample_transitions(temp_buffers,
-                                                          self.batch_size)
-
-            transitions = {}
-            for key in keys:
-                if key == 'observations':
-                    transitions[key] = {k: sampled_transitions[k][:, 0]
-                                        for k in self.observation_keys}
-                elif key == 'next_observations':
-                    transitions[key] = {k: sampled_transitions[k][:, 0]
-                                        for k in self.observation_keys 
-                                        if k != 'desired_goal'}
-                    transitions[key]['desired_goal'] = \
-                        sampled_transitions['desired_goal'][:, 0]
-                else:
-                    transitions[key] = sampled_transitions[key][:, 0]
-
-            yield transitions
-
-    def sample_transitions(self, episode_batch, batch_size):
-
-        if self.full:
-            episode_indices = (
-                self.np_random.randint(1, self.n_episodes_stored, batch_size) + 
-                self.pos) % self.n_episodes_stored
-        else:
-            episode_indices = self.np_random.randint(0, self.n_episodes_stored, 
-                                            batch_size)
-
-        her_indices = np.arange(
-            batch_size)[: int(self.her_ratio * batch_size)]
-
-        ep_lengths = self.episode_lengths[episode_indices]
-
-        # Filter episodes with 1 state: no transition available
-        if self.goal_selection_strategy == 'future':
-            her_indices = her_indices[ep_lengths[her_indices] > 1]
-            ep_lengths[her_indices] -= 1
-
-        transitions_indices = self.np_random.randint(ep_lengths)
-
-        transitions = {key: episode_batch[key][episode_indices, 
-                                              transitions_indices].copy()
-                       for key in episode_batch.keys()}
-
-        new_goals = self.sample_goals(episode_indices, her_indices, 
-                                      transitions_indices)
-
-        transitions["desired_goal"][her_indices] = new_goals
-
-        transitions["rewards"][her_indices, 0] = self.reward_function(
-            transitions["next_achieved_goal"][her_indices, 0],
-            transitions["desired_goal"][her_indices, 0],
-            None)
-
-        return transitions
-
-    def sample_goals(self, episode_indices, her_indices, transitions_indices):
-        her_episode_indices = episode_indices[her_indices]
-
-        # replay with k random states from the episodes after current transitions
-        if self.goal_selection_strategy == 'future':
-            transitions_indices = self.np_random.randint(
-                transitions_indices[her_indices] + 1, 
-                self.episode_lengths[her_episode_indices]
-            )
-
-        # replay with final state of the episodes
-        elif self.goal_selection_strategy == 'final':
-            transitions_indices = self.episode_lengths[her_episode_indices] - 1
-
-        # replay with random state of the episodes
-        elif self.goal_selection_strategy == 'episode':
-            transitions_indices = self.np_random.randint(
-                self.episode_lengths[her_episode_indices])
-        else:
-            raise ValueError(f"Strategy {self.goal_selection_strategy}" +
-                             "for sampling goals not supported!")
-
-        return self.buffers["achieved_goal"][her_episode_indices, 
-                                             transitions_indices]
+        return self.buffers['achieved_goal'][her_indices, her_columns]

@@ -47,7 +47,6 @@ def play_gym(agent, environment):
     while True:
         actions = agent.test_step(observations)
         observations, infos = environment.step(actions)
-        infos.pop('infos_')
         agent.test_update(**infos)
         #environment.render()
 

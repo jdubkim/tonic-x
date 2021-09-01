@@ -26,7 +26,7 @@ def train(agent, environment, trainer, before_training, after_training):
     # Build the train and test environments.
     _environment = environment
     environment = tonic.environments.Environment(_environment)
-    test_environment = tonic.environments.Environment(_environment)
+    test_environment = tonic.environments.Environment(_environment, 1, 1)
 
     # Initialize the logger to save data to the path environment/name/seed.
     tonic.logger.initialize(script_path=__file__)
