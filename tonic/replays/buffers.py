@@ -119,6 +119,7 @@ class DictBuffer(Buffer):
 
         # Unpack next_observations
         next_observations = kwargs.pop('next_observations')
+
         for key in next_observations.keys():
             kwargs['next_'+key] = next_observations[key]
 
@@ -186,7 +187,7 @@ class DictBuffer(Buffer):
 @gin.configurable
 class HerBuffer(DictBuffer):
     def __init__(
-        self, size=int(1e6), num_steps=1, batch_iterations=40, batch_size=512,
+        self, size=int(1e6), num_steps=1, batch_iterations=40, batch_size=1024,
         discount_factor=0.98, steps_before_batches=int(1e4),
         steps_between_batches=50, goal_selection_strategy='future',
         replay_k=4, reward_function=None):
@@ -215,6 +216,7 @@ class HerBuffer(DictBuffer):
     def store(self, **kwargs):
 
         kwargs.pop('environment_infos')
+
         
         if 'terminations' in kwargs:
             continuations = np.float32(1 - kwargs['terminations'])
@@ -304,8 +306,8 @@ class HerBuffer(DictBuffer):
             np.arange(self.batch_size)[: int(self.her_ratio * self.batch_size)]
 
         # Indices to replace goals (HER)
-        her_rows = indices[batch_her_proportion] // self.num_workers
-        her_columns = indices[batch_her_proportion] % self.num_workers
+        her_rows = rows[batch_her_proportion]
+        her_columns = columns[batch_her_proportion]
 
         samples = {key: self.buffers[key][rows, columns].copy() 
                    for key in self.buffers.keys()}

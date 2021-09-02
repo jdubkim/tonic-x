@@ -21,9 +21,8 @@ def mlp(units, activation, dense_kwargs=None):
 
 def get_observation_space(observation_space):
 
-    if isinstance(observation_space, dict):
-        obs_shape = {k: v.shape for k, v in observation_space.spaces.items()}
-    elif isinstance(observation_space.sample(), dict):
+    if isinstance(observation_space, dict) or \
+        isinstance(observation_space.sample(), dict):
         obs_shape = {k: v.shape for k, v in observation_space.spaces.items()}
     else:
         obs_shape = observation_space.shape

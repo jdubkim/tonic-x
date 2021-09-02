@@ -82,7 +82,6 @@ class Sequential:
         """ Returns a reward function of an environment. """
         return self.environments[0].compute_reward
         
-
     def is_type_of(self, type_class):
 
         env = self.environments[0]
@@ -98,7 +97,7 @@ class Sequential:
 
     def _preprocess_dict_obs(self, observations):
         
-        return {key: [dic[key] for dic in observations] 
+        return {key: np.array([dic[key] for dic in observations])
                 for key in observations[0].keys()}
         
 
@@ -160,7 +159,7 @@ class Parallel:
 
         if isinstance(observations, dict):
             self.observations_list = observations_list
-            self.next_observations_list = observations_list
+            self.next_observations_list = self.init_next_observations(observations_list)
         else:
             self.observations_list = np.array(observations_list)
             self.next_observations_list = np.zeros_like(self.observations_list)
@@ -175,7 +174,15 @@ class Parallel:
             [None for _ in range(self.workers_per_group)] 
             for _ in range(self.worker_groups)]
 
-        return self.get_observations_batch(observations)
+        return self.get_observations_batch(self.observations_list)
+
+    def init_next_observations(self, observations_list):
+        next_observations_list = observations_list.copy()
+        for i, observation in enumerate(observations_list):
+            for key in observation.keys():
+                next_observations_list[i][key] = np.zeros_like(observation[key])
+
+        return next_observations_list
 
     def step(self, actions):
         actions_list = np.split(actions, self.worker_groups)
@@ -191,22 +198,22 @@ class Parallel:
             self.terminations_list[index] = infos['terminations']
             self.environment_infos_list[index] = infos['environment_infos']
 
-        observations_ = observations.copy()
-        observations = self.get_observations_batch(observations)
+        observations = self.get_observations_batch(self.observations_list)
 
         infos = dict(
-            observations=self.get_observations_batch(observations_),
+            observations=self.get_observations_batch(self.next_observations_list),
             rewards=np.concatenate(self.rewards_list),
             resets=np.concatenate(self.resets_list),
             terminations=np.concatenate(self.terminations_list),
             environment_infos=sum(self.environment_infos_list, []))
         return observations, infos
 
-    def get_observations_batch(self, dummy_observation):
-        if isinstance(dummy_observation, dict):
-            return self._preprocess_dict_obs(self.observations_list)
+    def get_observations_batch(self, observation_list):
+        if isinstance(self.observation_space, dict) or \
+            isinstance(self.observation_space.sample(), dict):
+            return self._preprocess_dict_obs(observation_list)
         else:
-            return np.concatenate(self.observations_list)
+            return np.concatenate(observation_list)
 
     @property
     def compute_reward(self):
@@ -225,21 +232,14 @@ class Parallel:
         return isinstance(env, type_class)
 
     def _preprocess_dict_obs(self, observations):
+        ''' Convert list of dictionary observations to dictionary of lists.''' 
         dict_obs = {k: [] for k in observations[0].keys()}
-        
-        for key in observations[0].keys():
+
+        for key in dict_obs.keys():
             for dic in observations:
                 for obs in dic[key]:
                     dict_obs[key].append(obs)
-
-        return dict_obs
-
-    def _preprocess_dict_next_obs(self, observations):
-        dict_obs = {k: [] for k in observations[0].keys()}
-        
-        for key in observations[0].keys():
-            for dic in observations:
-                dict_obs[key].append(np.zeros_like(dic[key]))
+            dict_obs[key] = np.array(dict_obs[key])
 
         return dict_obs
 
