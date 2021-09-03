@@ -1,8 +1,10 @@
-from .builders import Bullet, ControlSuite, Gym, SimpleEnv
-from .distributed import Environment, Parallel, Sequential
+from .environment_builder import Bullet, ControlSuite, Gym
+from .distributed import Parallel, Sequential
+from .envs import ControlSuiteEnvironment, BitFlippingEnv
+from .utils import check_environment_type
 from .wrappers import ActionRescaler, TimeFeature
 
 
 __all__ = [
-    Bullet, ControlSuite, Gym, SimpleEnv, Environment, Parallel, Sequential,
-    ActionRescaler, TimeFeature]
+    Bullet, ControlSuite, Gym, Parallel, Sequential, ControlSuiteEnvironment, 
+    BitFlippingEnv, check_environment_type, ActionRescaler, TimeFeature]

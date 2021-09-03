@@ -6,6 +6,7 @@ from gym.envs.registration import EnvSpec
 
 
 class BitFlippingEnv(GoalEnv):
+    ''' Simple bit flipping environment for hindsight experience replay.'''
     
     spec = EnvSpec("BitFlippingEnv-v0")
 

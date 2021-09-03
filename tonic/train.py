@@ -1,4 +1,5 @@
 '''Script used to train agents.'''
+import copy
 
 from absl import app, flags
 import gin
@@ -24,9 +25,11 @@ def train(agent, environment, trainer, before_training, after_training):
     '''Trains an agent on an environment.'''
 
     # Build the train and test environments.
-    _environment = environment
-    environment = tonic.environments.Environment(_environment)
-    test_environment = tonic.environments.Environment(_environment, 1, 1)
+    environment = environment
+    test_environment = copy.deepcopy(environment)
+
+    environment.build_environment()
+    test_environment.build_environment(1, 1)
 
     # Initialize the logger to save data to the path environment/name/seed.
     tonic.logger.initialize(script_path=__file__)

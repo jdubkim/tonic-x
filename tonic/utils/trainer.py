@@ -5,7 +5,7 @@ import gin
 import gym
 import numpy as np
 
-from tonic import logger
+from tonic import environments, logger
 from tonic.utils import helpers
 
 
@@ -151,7 +151,8 @@ class Trainer:
                     break
             
             # Log the success_rate if the environment is GoalEnv 
-            if self.test_environment.is_type_of(gym.GoalEnv):
+            if environments.check_environment_type(self.test_environment,
+                                                   gym.GoalEnv):
                 logger.store('test/is_success', env_infos[0]['is_success'], 
                              stats=True)
             # Log the data.

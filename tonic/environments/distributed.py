@@ -1,21 +1,20 @@
 '''Builders for distributed training.'''
 
+import copy
 import multiprocessing
 
 import gin
 import numpy as np
-from numpy.lib.arraysetops import isin
 
 
 class Sequential:
     '''A group of environments used in sequence.'''
 
-    def __init__(self, environment_builder, max_episode_steps, workers):
-        self.environments = [environment_builder() for _ in range(workers)]
+    def __init__(self, environment, max_episode_steps, workers):
+        self.environments = [copy.deepcopy(environment) for _ in range(workers)]
         self.max_episode_steps = max_episode_steps
         self.observation_space = self.environments[0].observation_space
         self.action_space = self.environments[0].action_space
-        self.name = self.environments[0].name
 
     def initialize(self, seed):
         for i, environment in enumerate(self.environments):
@@ -77,24 +76,6 @@ class Sequential:
         if mode != 'human':
             return np.array(outs)
 
-    @property
-    def compute_reward(self):
-        """ Returns a reward function of an environment. """
-        return self.environments[0].compute_reward
-        
-    def is_type_of(self, type_class):
-
-        env = self.environments[0]
-        
-        # Extract environment wrappers
-        while True:
-            try:
-                env = env.env
-            except AttributeError:
-                break
-
-        return isinstance(env, type_class)
-
     def _preprocess_dict_obs(self, observations):
         
         return {key: np.array([dic[key] for dic in observations])
@@ -105,10 +86,10 @@ class Parallel:
     '''A group of sequential environments used in parallel.'''
 
     def __init__(
-        self, environment_builder, worker_groups, workers_per_group,
+        self, environment, worker_groups, workers_per_group,
         max_episode_steps
     ):
-        self.environment_builder = environment_builder
+        self.environment = environment
         self.worker_groups = worker_groups
         self.workers_per_group = workers_per_group
         self.max_episode_steps = max_episode_steps
@@ -117,7 +98,7 @@ class Parallel:
         def proc(action_pipe, index, seed):
             '''Process holding a sequential group of environments.'''
             envs = Sequential(
-                self.environment_builder, self.max_episode_steps,
+                self.environment, self.max_episode_steps,
                 self.workers_per_group)
             envs.initialize(seed)
 
@@ -129,7 +110,7 @@ class Parallel:
                 out = envs.step(actions)
                 self.output_queue.put((index, out))
 
-        dummy_environment = self.environment_builder()
+        dummy_environment = copy.deepcopy(self.environment)
         self.observation_space = dummy_environment.observation_space
         self.action_space = dummy_environment.action_space
         del dummy_environment
@@ -214,22 +195,6 @@ class Parallel:
             return self._preprocess_dict_obs(observation_list)
         else:
             return np.concatenate(observation_list)
-
-    @property
-    def compute_reward(self):
-        dummy_environment = self.environment_builder()
-        return dummy_environment.compute_reward
-
-    def is_type_of(self, type_class):
-        env = self.environments[0]
-        # Extract environment wrappers
-        while True:
-            try:
-                env = env.env
-            except AttributeError:
-                break
-
-        return isinstance(env, type_class)
 
     def _preprocess_dict_obs(self, observations):
         ''' Convert list of dictionary observations to dictionary of lists.''' 

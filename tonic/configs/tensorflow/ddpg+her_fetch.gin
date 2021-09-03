@@ -4,14 +4,14 @@ import tonic.tensorflow
 
 # Train Settings
 AGENT = @DDPG()
-ENVIRONMENT = @Gym
+ENVIRONMENT = @Gym()
 Gym.name = %environment_name
 environment_name = 'FetchPush-v1'
 
 trainer = @Trainer()
 NAME = 'DDPG+HER'
-sequential = 1
 parallel = 4
+sequential = 1
 seed = 0
 
 before_training = 'agent.replay.set_reward_function(environment.compute_reward)'
