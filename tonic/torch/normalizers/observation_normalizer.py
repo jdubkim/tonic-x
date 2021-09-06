@@ -1,9 +1,9 @@
 import gin
-import tensorflow as tf
+import torch
 
 
 @gin.configurable
-class ObservationNormalizer(tf.keras.Model):
+class ObservationNormalizer(torch.nn.Module):
     def __init__(self, normalizer_class):
         super(ObservationNormalizer, self).__init__()
         self.normalizer_class = normalizer_class
@@ -15,7 +15,7 @@ class ObservationNormalizer(tf.keras.Model):
         self.observation_normalizer = self.normalizer_class()
         self.observation_normalizer.initialize(obs_shape)
 
-    def __call__(self, values):
+    def forward(self, values):
         return self.observation_normalizer(values)
 
     def unnormalize(self, val):
@@ -29,7 +29,7 @@ class ObservationNormalizer(tf.keras.Model):
 
 
 @gin.configurable
-class DictObservationNormalizer(tf.keras.Model):
+class DictObservationNormalizer(torch.nn.Module):
     """ Stores dict of observation normalizers for dictioanry observations."""
     def __init__(self, normalizer_class):
         super(DictObservationNormalizer, self).__init__()
@@ -45,7 +45,7 @@ class DictObservationNormalizer(tf.keras.Model):
         for k, shape in self.obs_shape.items():
             self.observation_normalizer[k].initialize(shape)
 
-    def __call__(self, values):
+    def forward(self, values):
         return {k: normalizer(values[k])
                 for k, normalizer in self.observation_normalizer.items()}
 

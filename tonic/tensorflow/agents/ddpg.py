@@ -1,21 +1,24 @@
 import gin
 import tensorflow as tf
 
-from tonic import explorations, logger, replays
-from tonic.tensorflow import agents, models, normalizers, updaters
+from tonic import logger
+from tonic.tensorflow import agents, models, normalizers
+from tonic.utils import helpers
 
 
 def default_model():
     return models.ActorCriticWithTargets(
         actor=models.Actor(
             encoder=models.DictObservationEncoder(),
-            torso=models.MLP((256, 256), 'relu'),
+            torso=models.MLP((256, 256, 256), 'tanh'),
             head=models.DeterministicPolicyHead()),
         critic=models.Critic(
             encoder=models.DictObservationActionEncoder(),
-            torso=models.MLP((256, 256), 'relu'),
+            torso=models.MLP((256, 256, 256), 'relu'),
             head=models.ValueHead()),
-        observation_normalizer=normalizers.DictObservationNormalizer(normalizers.MeanStd))
+        observation_normalizer=normalizers.DictObservationNormalizer(
+            normalizers.MeanStd),
+        target_coeff=0.05)
 
 
 @gin.configurable
@@ -29,12 +32,10 @@ class DDPG(agents.Agent):
         critic_updater=None
     ):
         self.model = model or default_model()
-        self.replay = replay or replays.Buffer()
-        self.exploration = exploration or explorations.NormalActionNoise()
-        self.actor_updater = actor_updater or \
-            updaters.DeterministicPolicyGradient()
-        self.critic_updater = critic_updater or \
-            updaters.DeterministicQLearning()
+        self.replay = replay
+        self.exploration = exploration
+        self.actor_updater = actor_updater
+        self.critic_updater = critic_updater
 
     def initialize(self, observation_space, action_space, seed=None):
         super().initialize(seed=seed)
@@ -52,7 +53,7 @@ class DDPG(agents.Agent):
         # Keep some values for the next update.
         self.last_observations = observations.copy()
         self.last_actions = actions.copy()
-        self.steps += len(observations)
+        self.steps += helpers.num_workers(observations)
 
         return actions
 
@@ -60,16 +61,16 @@ class DDPG(agents.Agent):
         # Greedy actions for testing.
         return self._greedy_actions(observations).numpy()
 
-    def update(self, observations, rewards, resets, terminations):
+    def update(self, observations, rewards, resets, terminations,
+               environment_infos):
         # Store the last transitions in the replay.
         self.replay.store(
             observations=self.last_observations, actions=self.last_actions,
             next_observations=observations, rewards=rewards, resets=resets,
-            terminations=terminations)
+            terminations=terminations, environment_infos=environment_infos)
 
         # Prepare to update the normalizers.
         if self.model.observation_normalizer:
-            print(self.last_observations)
             self.model.observation_normalizer.record(self.last_observations)
         if self.model.return_normalizer:
             self.model.return_normalizer.record(rewards)
@@ -98,7 +99,6 @@ class DDPG(agents.Agent):
             for key in infos:
                 for k, v in infos[key].items():
                     logger.store(key + '/' + k, v.numpy())
-
         # Update the normalizers.
         if self.model.observation_normalizer:
             self.model.observation_normalizer.update()

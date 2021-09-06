@@ -3,6 +3,8 @@ import copy
 import gin
 import tensorflow as tf
 
+from .utils import get_dummy_observations, get_observation_space
+
 
 @gin.configurable
 class ActorCritic(tf.keras.Model):
@@ -109,8 +111,12 @@ class ActorTwinCriticWithTargets(tf.keras.Model):
         self.target_coeff = target_coeff
 
     def initialize(self, observation_space, action_space):
+
+        obs_shape = get_observation_space(observation_space)
+        dummy_observations = get_dummy_observations(obs_shape)
+
         if self.observation_normalizer:
-            self.observation_normalizer.initialize(observation_space.shape)
+            self.observation_normalizer.initialize(obs_shape)
         self.actor.initialize(
             observation_space, action_space, self.observation_normalizer)
         self.critic_1.initialize(
@@ -127,7 +133,6 @@ class ActorTwinCriticWithTargets(tf.keras.Model):
         self.target_critic_2.initialize(
             observation_space, action_space, self.observation_normalizer,
             self.return_normalizer)
-        dummy_observations = tf.zeros((1,) + observation_space.shape)
         dummy_actions = tf.zeros((1,) + action_space.shape)
         self.actor(dummy_observations)
         self.critic_1(dummy_observations, dummy_actions)
@@ -152,24 +157,3 @@ class ActorTwinCriticWithTargets(tf.keras.Model):
     def update_targets(self):
         for o, t in zip(self.online_variables, self.target_variables):
             t.assign((1 - self.target_coeff) * t + self.target_coeff * o)
-
-
-# TODO: Move into other file
-def get_observation_space(observation_space):
-
-    if isinstance(observation_space.sample(), dict):
-        obs_shape = {k: v.shape for k, v in observation_space.spaces.items()}
-    else:
-        obs_shape = observation_space.shape
-
-    return obs_shape
-
-
-def get_dummy_observations(observation_shape):
-    if isinstance(observation_shape, dict):
-        dummy_observations = {k: tf.zeros((1,) + v) \
-            for k, v in observation_shape.items()}
-    else:
-        dummy_observations = tf.zeros((1,) + observation_shape)
-
-    return dummy_observations

@@ -3,6 +3,8 @@
 import gin
 import numpy as np
 
+from tonic.utils import helpers
+
 
 @gin.configurable
 class NoActionNoise:
@@ -19,7 +21,7 @@ class NoActionNoise:
             actions = self.policy(observations)
             actions = np.clip(actions, -1, 1)
         else:
-            shape = (len(observations), self.action_size)
+            shape = (helpers.num_workers(observations), self.action_size)
             actions = self.np_random.uniform(-1, 1, shape)
         return actions
 
@@ -45,8 +47,9 @@ class NormalActionNoise:
             actions = (actions + noises).astype(np.float32)
             actions = np.clip(actions, -1, 1)
         else:
-            shape = (len(observations), self.action_size)
+            shape = (helpers.num_workers(observations), self.action_size)
             actions = self.np_random.uniform(-1, 1, shape)
+
         return actions
 
     def update(self, resets):
@@ -83,7 +86,7 @@ class OrnsteinUhlenbeckActionNoise:
             actions = (actions + self.noises).astype(np.float32)
             actions = np.clip(actions, -1, 1)
         else:
-            shape = (len(observations), self.action_size)
+            shape = (helpers.num_workers(observations), self.action_size)
             actions = self.np_random.uniform(-1, 1, shape)
         return actions
 

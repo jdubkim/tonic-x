@@ -2,9 +2,11 @@ import os
 import time
 
 import gin
+import gym
 import numpy as np
 
-from tonic import logger
+from tonic import environments, logger
+from tonic.utils import helpers
 
 
 @gin.configurable
@@ -13,7 +15,7 @@ class Trainer:
 
     def __init__(
         self, steps=int(5e6), epoch_steps=10000, save_steps=500000,
-        test_episodes=5, show_progress=True
+        test_episodes=10, show_progress=True
     ):
         self.max_steps = steps
         self.epoch_steps = epoch_steps
@@ -21,7 +23,7 @@ class Trainer:
         self.test_episodes = test_episodes
         self.show_progress = show_progress
 
-    @gin.configurable
+    @gin.configurable(module='Trainer')
     def initialize(self, agent, environment, test_environment=None, seed=None):
         if seed is not None:
             environment.initialize(seed=seed)
@@ -45,9 +47,10 @@ class Trainer:
         # Start the environments.
         observations = self.environment.start()
 
-        num_workers = len(observations)
-        scores = np.zeros(len(observations))
-        lengths = np.zeros(len(observations), int)
+        num_workers = helpers.num_workers(observations)
+
+        scores = np.zeros(num_workers)
+        lengths = np.zeros(num_workers, int)
         steps, epoch_steps, epochs, episodes = 0, 0, 0, 0
         max_steps = np.ceil(self.max_steps / num_workers)
         if self.save_steps:
@@ -124,12 +127,11 @@ class Trainer:
         # Start the environment.
         if not hasattr(self, 'test_observations'):
             self.test_observations = self.test_environment.start()
-            assert len(self.test_observations) == 1
+            assert helpers.num_workers(self.test_observations) == 1
 
         # Test loop.
         for _ in range(self.test_episodes):
             score, length = 0, 0
-
             while True:
                 # Select an action.
                 actions = self.agent.test_step(self.test_observations)
@@ -137,8 +139,10 @@ class Trainer:
                 logger.store('test/action', actions, stats=True)
 
                 # Take a step in the environment.
-                self.test_observations, infos = self.test_environment.step(
-                    actions)
+                self.test_observations, infos = \
+                    self.test_environment.step(actions)
+                env_infos = infos.pop('environment_infos')
+
                 self.agent.test_update(**infos)
 
                 score += infos['rewards'][0]
@@ -147,6 +151,11 @@ class Trainer:
                 if infos['resets'][0]:
                     break
 
+            # Log the success_rate if the environment is GoalEnv
+            if environments.check_environment_type(self.test_environment,
+                                                   gym.GoalEnv):
+                logger.store('test/is_success', env_infos[0]['is_success'],
+                             stats=True)
             # Log the data.
             logger.store('test/episode_score', score, stats=True)
             logger.store('test/episode_length', length, stats=True)

@@ -8,6 +8,7 @@ from tonic.tensorflow import models
 FLOAT_EPSILON = 1e-8
 
 
+@gin.configurable
 class SquashedMultivariateNormalDiag:
     def __init__(self, loc, scale):
         self._distribution = tfp.distributions.MultivariateNormalDiag(

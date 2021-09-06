@@ -485,5 +485,5 @@ if __name__ == '__main__':
                     time.sleep(seconds)
                 start_time = time.time()
                 plot(**vars(args), fig=fig)
-    except:
+    except: # noqa
         pass

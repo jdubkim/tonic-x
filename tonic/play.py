@@ -1,6 +1,5 @@
 '''Script used to play with trained agents.'''
 
-import argparse
 import os
 
 from absl import app, flags
@@ -8,7 +7,7 @@ import gin
 import numpy as np
 
 import tonic  # noqa
-from tonic.environments import Bullet, ControlSuite, Gym
+from tonic.environments import Bullet
 
 
 flags.DEFINE_multi_string(
@@ -134,7 +133,7 @@ def play_control_suite(agent, environment):
 
 
 @gin.configurable
-def play(path='.', checkpoint='last', seed=10, agent=None, environment=None):
+def play(path='.', checkpoint='950000', seed=10, agent=None, environment=None):
     '''Reloads an agent and an environment from a previous experiment.'''
 
     tonic.logger.log(f'Loading experiment from {path}')
@@ -142,8 +141,10 @@ def play(path='.', checkpoint='last', seed=10, agent=None, environment=None):
     # If agent and environment not specified, load default agent and
     # environment
     if not agent:
+        tonic.logger.log('Loading default agent.')
         agent = load_default_agent()
     if not environment:
+        tonic.logger.log('Loading default environment.')
         environment = load_default_environment()
 
     # Use no checkpoint, the agent is freshly created.

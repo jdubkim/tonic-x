@@ -1,5 +1,4 @@
 '''Script used to train agents.'''
-
 from absl import app, flags
 import gin
 
@@ -24,9 +23,8 @@ def train(agent, environment, trainer, before_training, after_training):
     '''Trains an agent on an environment.'''
 
     # Build the train and test environments.
-    _environment = environment
-    environment = tonic.environments.Environment(_environment)
-    test_environment = tonic.environments.Environment(_environment)
+    environment = environment()
+    test_environment = environment(worker_groups=1, workers_per_group=1)
 
     # Initialize the logger to save data to the path environment/name/seed.
     tonic.logger.initialize(script_path=__file__)
@@ -41,6 +39,8 @@ def train(agent, environment, trainer, before_training, after_training):
         if '.py' in before_training:
             exec(compile(open(before_training).read(),
                          before_training, 'exec'))
+        else:
+            exec(before_training)
 
     # Train.
     trainer.run()
@@ -50,6 +50,8 @@ def train(agent, environment, trainer, before_training, after_training):
         if '.py' in after_training:
             exec(compile(open(after_training).read(),
                          after_training, 'exec'))
+        else:
+            exec(after_training)
 
 
 def main(argv):

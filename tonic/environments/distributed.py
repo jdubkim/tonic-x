@@ -1,5 +1,6 @@
 '''Builders for distributed training.'''
 
+import copy
 import multiprocessing
 
 import gin
@@ -9,12 +10,12 @@ import numpy as np
 class Sequential:
     '''A group of environments used in sequence.'''
 
-    def __init__(self, environment_builder, max_episode_steps, workers):
-        self.environments = [environment_builder() for _ in range(workers)]
+    def __init__(self, environment, max_episode_steps, workers):
+        self.environments = [copy.deepcopy(environment)
+                             for _ in range(workers)]
         self.max_episode_steps = max_episode_steps
         self.observation_space = self.environments[0].observation_space
         self.action_space = self.environments[0].action_space
-        self.name = self.environments[0].name
 
     def initialize(self, seed):
         for i, environment in enumerate(self.environments):
@@ -23,6 +24,9 @@ class Sequential:
     def start(self):
         '''Used once to get the initial observations.'''
         observations = [env.reset() for env in self.environments]
+        if isinstance(observations[0], dict):
+            observations = self._preprocess_dict_obs(observations)
+
         self.lengths = np.zeros(len(self.environments), int)
 
         return observations
@@ -33,9 +37,10 @@ class Sequential:
         resets = []
         terminations = []
         observations = []  # Observations for the actions selection.
+        environment_infos = []
 
         for i in range(len(self.environments)):
-            ob, rew, term, _ = self.environments[i].step(actions[i])
+            ob, rew, term, info = self.environments[i].step(actions[i])
 
             self.lengths[i] += 1
             # Timeouts trigger resets but are not true terminations.
@@ -44,6 +49,7 @@ class Sequential:
             rewards.append(rew)
             resets.append(reset)
             terminations.append(term)
+            environment_infos.append(info)
 
             if reset:
                 ob = self.environments[i].reset()
@@ -51,11 +57,16 @@ class Sequential:
 
             observations.append(ob)
 
+        if isinstance(ob, dict):
+            observations = self._preprocess_dict_obs(observations)
+            next_observations = self._preprocess_dict_obs(next_observations)
+
         infos = dict(
             observations=next_observations,
             rewards=np.array(rewards, np.float32),
             resets=np.array(resets, np.bool),
-            terminations=np.array(terminations, np.bool))
+            terminations=np.array(terminations, np.bool),
+            environment_infos=environment_infos)
         return observations, infos
 
     def render(self, mode='human', *args, **kwargs):
@@ -66,15 +77,20 @@ class Sequential:
         if mode != 'human':
             return np.array(outs)
 
+    def _preprocess_dict_obs(self, observations):
+
+        return {key: np.array([dic[key] for dic in observations])
+                for key in observations[0].keys()}
+
 
 class Parallel:
     '''A group of sequential environments used in parallel.'''
 
     def __init__(
-        self, environment_builder, worker_groups, workers_per_group,
+        self, environment, worker_groups, workers_per_group,
         max_episode_steps
     ):
-        self.environment_builder = environment_builder
+        self.environment = environment
         self.worker_groups = worker_groups
         self.workers_per_group = workers_per_group
         self.max_episode_steps = max_episode_steps
@@ -83,7 +99,7 @@ class Parallel:
         def proc(action_pipe, index, seed):
             '''Process holding a sequential group of environments.'''
             envs = Sequential(
-                self.environment_builder, self.max_episode_steps,
+                self.environment, self.max_episode_steps,
                 self.workers_per_group)
             envs.initialize(seed)
 
@@ -95,7 +111,7 @@ class Parallel:
                 out = envs.step(actions)
                 self.output_queue.put((index, out))
 
-        dummy_environment = self.environment_builder
+        dummy_environment = copy.deepcopy(self.environment)
         self.observation_space = dummy_environment.observation_space
         self.action_space = dummy_environment.action_space
         del dummy_environment
@@ -123,16 +139,34 @@ class Parallel:
             index, observations = self.output_queue.get()
             observations_list[index] = observations
 
-        self.observations_list = np.array(observations_list)
-        self.next_observations_list = np.zeros_like(self.observations_list)
+        if isinstance(observations, dict):
+            self.observations_list = observations_list
+            self.next_observations_list = self.init_next_observations(
+                observations_list)
+        else:
+            self.observations_list = np.array(observations_list)
+            self.next_observations_list = np.zeros_like(self.observations_list)
+
         self.rewards_list = np.zeros(
             (self.worker_groups, self.workers_per_group), np.float32)
         self.resets_list = np.zeros(
             (self.worker_groups, self.workers_per_group), np.bool)
         self.terminations_list = np.zeros(
             (self.worker_groups, self.workers_per_group), np.bool)
+        self.environment_infos_list = [
+            [None for _ in range(self.workers_per_group)]
+            for _ in range(self.worker_groups)]
 
-        return np.concatenate(self.observations_list)
+        return self.get_observations_batch(self.observations_list)
+
+    def init_next_observations(self, observations_list):
+        next_observations_list = observations_list.copy()
+        for i, observation in enumerate(observations_list):
+            for key in observation.keys():
+                next_observations_list[i][key] = np.zeros_like(
+                    observation[key])
+
+        return next_observations_list
 
     def step(self, actions):
         actions_list = np.split(actions, self.worker_groups)
@@ -146,14 +180,37 @@ class Parallel:
             self.rewards_list[index] = infos['rewards']
             self.resets_list[index] = infos['resets']
             self.terminations_list[index] = infos['terminations']
+            self.environment_infos_list[index] = infos['environment_infos']
 
-        observations = np.concatenate(self.observations_list)
+        observations = self.get_observations_batch(self.observations_list)
+
         infos = dict(
-            observations=np.concatenate(self.next_observations_list),
+            observations=self.get_observations_batch(
+                self.next_observations_list),
             rewards=np.concatenate(self.rewards_list),
             resets=np.concatenate(self.resets_list),
-            terminations=np.concatenate(self.terminations_list))
+            terminations=np.concatenate(self.terminations_list),
+            environment_infos=sum(self.environment_infos_list, []))
         return observations, infos
+
+    def get_observations_batch(self, observation_list):
+        if isinstance(self.observation_space, dict) or \
+                isinstance(self.observation_space.sample(), dict):
+            return self._preprocess_dict_obs(observation_list)
+        else:
+            return np.concatenate(observation_list)
+
+    def _preprocess_dict_obs(self, observations):
+        ''' Convert list of dictionary observations to dictionary of lists.'''
+        dict_obs = {k: [] for k in observations[0].keys()}
+
+        for key in dict_obs.keys():
+            for dic in observations:
+                for obs in dic[key]:
+                    dict_obs[key].append(obs)
+            dict_obs[key] = np.array(dict_obs[key])
+
+        return dict_obs
 
 
 @gin.configurable
