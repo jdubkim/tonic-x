@@ -5,9 +5,17 @@ from gym import GoalEnv, spaces
 from gym.envs.registration import EnvSpec
 
 
+def make_simple_env(name, *args, **kwargs):
+    if name in simple_envs_list:
+        environment_class = simple_envs_list.get(name)
+        return environment_class(*args, **kwargs)
+
+    raise KeyError('Wrong environment name.')
+
+
 class BitFlippingEnv(GoalEnv):
     ''' Simple bit flipping environment for hindsight experience replay.'''
-    
+
     spec = EnvSpec("BitFlippingEnv-v0")
 
     def __init__(self, n_bits=10, continuous=True, max_timesteps=None):
@@ -23,17 +31,17 @@ class BitFlippingEnv(GoalEnv):
         self.obs_space = spaces.MultiBinary(n_bits)
 
         if continuous:
-            self.action_space = spaces.Box(-1, 1, shape=(n_bits,), dtype=np.float32)
+            self.action_space = spaces.Box(-1, 1, shape=(n_bits,),
+                                           dtype=np.float32)
         else:
             self.action_space = spaces.Discrete(n_bits)
 
         self.continuous = continuous
         self.max_timesteps = n_bits if max_timesteps is None else max_timesteps
-        self.max_episode_steps = self.max_timesteps
+        self._max_episode_steps = self.max_timesteps
 
         self.state = None
         self.desired_goal = np.ones((n_bits,))
-        
 
     def seed(self, seed):
         self.obs_space.seed(seed)
@@ -44,20 +52,18 @@ class BitFlippingEnv(GoalEnv):
         return self._get_obs()
 
     def _get_obs(self):
-        return OrderedDict(
-        [
+        return OrderedDict([
             ("observation", self.state.copy()),
             ("achieved_goal", self.state.copy()),
-            ("desired_goal", self.desired_goal.copy()),
-        ]
-    )
+            ("desired_goal", self.desired_goal.copy())
+            ])
 
     def step(self, action):
         if self.continuous:
             self.state[action > 0] = 1 - self.state[action > 0]
         else:
             self.state[action] = 1 - self.state[action]
-            
+
         obs = self._get_obs()
         reward = float(self.compute_reward(
             obs["achieved_goal"], obs["desired_goal"], None))
@@ -70,13 +76,9 @@ class BitFlippingEnv(GoalEnv):
         return obs, reward, done, info
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        # batch_size = achieved_goal.shape[0] if len(achieved_goal.shape) > 1 else 1
-        # achieved_goal = np.array(achieved_goal).reshape(batch_size, -1)
-        # desired_goal = np.array(desired_goal).reshape(batch_size, -1)
-
         distance = np.linalg.norm(achieved_goal - desired_goal, axis=-1)
         return -(distance > 0).astype(np.float32)
-    
+
     def render(self, mode="human"):
         if mode == "rgb_array":
             return self.state.copy()
@@ -84,3 +86,8 @@ class BitFlippingEnv(GoalEnv):
 
     def close(self):
         pass
+
+
+simple_envs_list = {
+    'bitflipping-env': BitFlippingEnv,
+}

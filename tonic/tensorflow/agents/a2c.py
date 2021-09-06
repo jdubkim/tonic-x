@@ -1,8 +1,8 @@
 import gin
 import tensorflow as tf
 
-from tonic import logger, replays
-from tonic.tensorflow import agents, models, normalizers, updaters
+from tonic import logger
+from tonic.tensorflow import agents, models, normalizers
 
 
 def default_model():

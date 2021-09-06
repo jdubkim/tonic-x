@@ -8,11 +8,12 @@ from tonic import environments
 
 
 class Environment(abc.ABC):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args, **kwargs):
+    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+                 **kwargs):
 
         self.name = name
-        self.parallel = worker_groups
-        self.sequential = workers_per_group
+        self.worker_groups = worker_groups
+        self.workers_per_group = workers_per_group
 
         self.dummy_environment = self.create_environment(name, *args, **kwargs)
         self.environment = self.environment_wrapper(self.dummy_environment)
@@ -20,13 +21,14 @@ class Environment(abc.ABC):
         self.observation_space = self.environment.observation_space
         self.action_space = self.environment.action_space
 
-        super(Environment, self).__init__() 
+        super(Environment, self).__init__()
 
     @abc.abstractmethod
     def create_environment(self, name, *args, **kwargs):
         pass
 
     def initialize(self, seed):
+        self.distribute_environment()
         self.distributed_environment.initialize(seed)
 
     def start(self):
@@ -37,11 +39,11 @@ class Environment(abc.ABC):
 
     def render(self, mode, *args, **kwargs):
         return self.distributed_environment.render(mode, *args, **kwargs)
-        
+
     @gin.configurable
     def environment_wrapper(
         self, environment, terminal_timeouts=False, time_feature=False,
-        max_episode_steps='default', scaled_actions=True 
+        max_episode_steps='default', scaled_actions=True
     ):
         '''Wrap an environment.
         Time limits can be properly handled with terminal_timeouts=False or
@@ -72,27 +74,28 @@ class Environment(abc.ABC):
         return environment
 
     @gin.configurable
-    def build_environment(self, worker_groups=1, workers_per_group=1):
+    def distribute_environment(self):
         '''Distributes workers over parallel and sequential groups.'''
         dummy_environment = copy.deepcopy(self.environment)
         max_episode_steps = dummy_environment.max_episode_steps
         del dummy_environment
 
-        if worker_groups < 2:
+        if self.worker_groups < 2:
             self.distributed_environment = environments.Sequential(
                 self.environment, max_episode_steps=max_episode_steps,
-                workers=workers_per_group)
+                workers=self.workers_per_group)
 
         self.distributed_environment = environments.Parallel(
-            self.environment, worker_groups=worker_groups,
-            workers_per_group=workers_per_group,
+            self.environment, worker_groups=self.worker_groups,
+            workers_per_group=self.workers_per_group,
             max_episode_steps=max_episode_steps)
 
 
 @gin.configurable
 class Gym(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args, **kwargs):
-        super(Gym, self).__init__(name, worker_groups, workers_per_group, 
+    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+                 **kwargs):
+        super(Gym, self).__init__(name, worker_groups, workers_per_group,
                                   *args, **kwargs)
 
     def create_environment(self, name, *args, **kwargs):
@@ -106,7 +109,8 @@ class Gym(Environment):
 
 @gin.configurable
 class Bullet(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args, **kwargs):
+    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+                 **kwargs):
         super(Bullet, self).__init__(name, worker_groups, workers_per_group,
                                      *args, **kwargs)
 
@@ -117,7 +121,8 @@ class Bullet(Environment):
 
 @gin.configurable
 class ControlSuite(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args, **kwargs):
+    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+                 **kwargs):
         super(Bullet, self).__init__(name, worker_groups, workers_per_group,
                                      *args, **kwargs)
 
@@ -126,3 +131,21 @@ class ControlSuite(Environment):
         environment = environments.ControlSuiteEnvironment(
             domain_name=domain, task_name=task, *args, **kwargs)
         return gym.wrappers.TimeLimit(environment, 1000)
+
+
+@gin.configurable
+class SimpleEnv(Environment):
+    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+                 **kwargs):
+        super(SimpleEnv, self).__init__(name, worker_groups, workers_per_group,
+                                        *args, **kwargs)
+
+    def create_environment(self, name, *args, **kwargs):
+        environment = environments.make_simple_env(name, *args, **kwargs)
+        return gym.wrappers.TimeLimit(environment,
+                                      environment._max_episode_steps)
+
+    @property
+    def compute_reward(self):
+        """ Returns a reward function of an environment. """
+        return self.environment.compute_reward

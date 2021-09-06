@@ -49,7 +49,7 @@ class NormalActionNoise:
         else:
             shape = (helpers.num_workers(observations), self.action_size)
             actions = self.np_random.uniform(-1, 1, shape)
-        
+
         return actions
 
     def update(self, resets):

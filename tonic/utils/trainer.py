@@ -30,7 +30,7 @@ class Trainer:
 
         if test_environment and seed is not None:
             test_environment.initialize(seed=seed + 10000)
-        
+
         agent.initialize(
             observation_space=environment.observation_space,
             action_space=environment.action_space, seed=seed)
@@ -48,7 +48,7 @@ class Trainer:
         observations = self.environment.start()
 
         num_workers = helpers.num_workers(observations)
-        
+
         scores = np.zeros(num_workers)
         lengths = np.zeros(num_workers, int)
         steps, epoch_steps, epochs, episodes = 0, 0, 0, 0
@@ -139,7 +139,8 @@ class Trainer:
                 logger.store('test/action', actions, stats=True)
 
                 # Take a step in the environment.
-                self.test_observations, infos = self.test_environment.step(actions)
+                self.test_observations, infos = \
+                    self.test_environment.step(actions)
                 env_infos = infos.pop('environment_infos')
 
                 self.agent.test_update(**infos)
@@ -149,11 +150,11 @@ class Trainer:
 
                 if infos['resets'][0]:
                     break
-            
-            # Log the success_rate if the environment is GoalEnv 
+
+            # Log the success_rate if the environment is GoalEnv
             if environments.check_environment_type(self.test_environment,
                                                    gym.GoalEnv):
-                logger.store('test/is_success', env_infos[0]['is_success'], 
+                logger.store('test/is_success', env_infos[0]['is_success'],
                              stats=True)
             # Log the data.
             logger.store('test/episode_score', score, stats=True)

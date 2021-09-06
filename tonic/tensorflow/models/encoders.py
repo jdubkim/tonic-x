@@ -1,5 +1,3 @@
-import copy 
-
 import gin
 import tensorflow as tf
 
@@ -29,14 +27,14 @@ class ObservationActionEncoder(tf.keras.Model):
 @gin.configurable
 class DictObservationEncoder(tf.keras.Model):
     @gin.configurable(module='DictObservationEncoder')
-    def initialize(self, observation_normalizer=None, 
+    def initialize(self, observation_normalizer=None,
                    keywords=None):
         assert keywords is not None
         self.observation_normalizer = observation_normalizer
         self.keywords = keywords
-        
+
     def call(self, observations):
-        # If observation is given as a list of dictionaries, 
+        # If observation is given as a list of dictionaries,
         # convert them into a dictionary of lists
         if self.observation_normalizer:
             observations = self.observation_normalizer(observations)

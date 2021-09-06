@@ -1,6 +1,5 @@
 '''Script used to play with trained agents.'''
 
-import argparse
 import os
 
 from absl import app, flags
@@ -8,7 +7,7 @@ import gin
 import numpy as np
 
 import tonic  # noqa
-from tonic.environments import Bullet, ControlSuite, Gym
+from tonic.environments import Bullet
 
 
 flags.DEFINE_multi_string(
@@ -36,7 +35,7 @@ def play_gym(agent, environment):
     '''Launches an agent in a Gym-based environment.'''
 
     observations = environment.start()
-    #environment.render()
+    environment.render()
 
     score = 0
     length = 0
@@ -48,7 +47,7 @@ def play_gym(agent, environment):
         actions = agent.test_step(observations)
         observations, infos = environment.step(actions)
         agent.test_update(**infos)
-        #environment.render()
+        environment.render()
 
         reward = infos['rewards'][0]
         score += reward

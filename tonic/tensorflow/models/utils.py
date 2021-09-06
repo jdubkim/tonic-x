@@ -22,7 +22,7 @@ def mlp(units, activation, dense_kwargs=None):
 def get_observation_space(observation_space):
 
     if isinstance(observation_space, dict) or \
-        isinstance(observation_space.sample(), dict):
+            isinstance(observation_space.sample(), dict):
         obs_shape = {k: v.shape for k, v in observation_space.spaces.items()}
     else:
         obs_shape = observation_space.shape
@@ -32,11 +32,12 @@ def get_observation_space(observation_space):
 
 def get_dummy_observations(observation_shape):
     if isinstance(observation_shape, dict):
-        dummy_observations = {k: tf.zeros((1,) + v) \
-            for k, v in observation_shape.items()}
+        dummy_observations = {k: tf.zeros((1,) + v)
+                              for k, v in observation_shape.items()}
     else:
         dummy_observations = tf.zeros((1,) + observation_shape)
 
     return dummy_observations
+
 
 MLP = mlp

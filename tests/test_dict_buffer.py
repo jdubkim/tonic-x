@@ -1,10 +1,8 @@
-import gin
 import numpy as np
 import pytest
 
 import tonic
 from tonic.replays import DictBuffer
-from tonic.environments import SimpleEnv
 
 
 # Constants
@@ -13,7 +11,7 @@ batch_iterations = 1
 
 
 # Dictionary Buffer
-dictbuffer = DictBuffer(batch_size=batch_size, 
+dictbuffer = DictBuffer(batch_size=batch_size,
                         batch_iterations=batch_iterations)
 
 
@@ -28,22 +26,18 @@ def test_dict_buffer_initialise():
         "buffers should not be created when initialised"
 
 
-@pytest.mark.parametrize("seed", [0, 10, 20]) 
+@pytest.mark.parametrize("seed", [0, 10, 20])
 def test_dict_buffer_store_one_step(seed):
-    
+
     dictbuffer.initialize(seed=seed)
 
-    # Parse environment name using gin
-    with gin.unlock_config():
-        gin.bind_parameter('SimpleEnv.name', 'BitFlippingEnv')
-
     # Use bit flipping environment
-    environment = tonic.environments.Environment(SimpleEnv, 1, 1)
+    environment = tonic.environments.SimpleEnv('bitflipping-env', 1, 1)
     environment.initialize(seed=seed)
 
     observation_space = environment.observation_space
     action_space = environment.action_space
-    
+
     # Initialise a constant agent
     agent = tonic.agents.Constant()
     agent.initialize(observation_space, action_space, seed=seed)
@@ -58,11 +52,12 @@ def test_dict_buffer_store_one_step(seed):
 
     dictbuffer.store(
         observations=observations,
-        actions = actions,
-        next_observations = next_observations,
+        actions=actions,
+        next_observations=next_observations,
         rewards=infos['rewards'],
         resets=infos['resets'],
         terminations=infos['terminations'],
+        environment_infos=infos['environment_infos']
     )
 
     # Buffer should now be created
@@ -75,7 +70,7 @@ def test_dict_buffer_store_one_step(seed):
     for key in observations.keys():
         assert np.allclose(dictbuffer.buffers[key][0], observations[key])
     for key in observations.keys():
-        assert np.allclose(dictbuffer.buffers['next_'+key][0], 
+        assert np.allclose(dictbuffer.buffers['next_'+key][0],
                            next_observations[key])
 
     assert np.allclose(dictbuffer.buffers['actions'][0], actions)
@@ -84,23 +79,19 @@ def test_dict_buffer_store_one_step(seed):
 
     return infos
 
-    
+
 @pytest.mark.parametrize("seed", [0, 10, 20])
 def test_dict_buffer_store_multi_steps(seed, n_steps=10):
-    
+
     dictbuffer.initialize(seed=seed)
 
-    # Parse environment name using gin
-    with gin.unlock_config():
-        gin.bind_parameter('SimpleEnv.name', 'BitFlippingEnv')
-
     # Use bit flipping environment
-    environment = tonic.environments.Environment(SimpleEnv, 1, 1)
+    environment = tonic.environments.SimpleEnv('bitflipping-env', 1, 1)
     environment.initialize(seed=seed)
 
     observation_space = environment.observation_space
     action_space = environment.action_space
-    
+
     # Initialise a normal random agent
     agent = tonic.agents.NormalRandom()
     agent.initialize(observation_space, action_space, seed=seed)
@@ -116,7 +107,7 @@ def test_dict_buffer_store_multi_steps(seed, n_steps=10):
         'rewards': [],
         'terminations': [],
         'resets': [],
-        'infos': [],
+        'environment_infos': [],
     }
 
     # Start environment
@@ -135,6 +126,7 @@ def test_dict_buffer_store_multi_steps(seed, n_steps=10):
             'rewards': infos['rewards'],
             'terminations': infos['terminations'],
             'resets': infos['resets'],
+            'environment_infos': infos['environment_infos']
         }
 
         # Store an item into dictionary buffer.
@@ -151,37 +143,36 @@ def test_dict_buffer_store_multi_steps(seed, n_steps=10):
                     items['next_'+obs_key].append(next_observations[obs_key])
             else:
                 items[key].append(kwargs[key])
-        
+
         steps += 1
-        
+
         if steps >= max_steps:
             break
 
-        
     for key in items.keys():
         if key in ['terminations', 'resets']:
             items[key] = np.array(items[key], dtype=np.int64)
-        elif key == 'infos':
+        elif key == 'environment_infos':
             pass
         else:
             items[key] = np.array(items[key], dtype=np.float32)
 
-    items.pop('infos')
-    
+    items.pop('environment_infos')
+
     for key in items.keys():
         assert np.allclose(dictbuffer.buffers[key][:steps], items[key])
-        
+
     return items
 
 
-@pytest.mark.parametrize("seed", [0, 10, 20]) 
+@pytest.mark.parametrize("seed", [0, 10, 20])
 def test_dict_buffer_get(seed):
 
     dictbuffer.initialize(seed)
     np_random = np.random.RandomState(seed)
 
     kwargs = test_dict_buffer_store_multi_steps(seed)
-    
+
     keys = ('observations', 'next_observations', 'actions', 'rewards',
             'terminations')
 
@@ -191,13 +182,11 @@ def test_dict_buffer_get(seed):
     indices = [np_random.randint(max_size * num_workers, size=batch_size)
                for _ in range(batch_iterations)]
 
-               
-    i = 0
-
+    index = 0
     # Retrieve batches from the buffer
     for batch in dictbuffer.get(*keys):
-        rows = indices[i] // num_workers
-        columns = indices[i] % num_workers
+        rows = indices[index] // num_workers
+        columns = indices[index] % num_workers
 
         # Check if correct batches are retrieved.
         for key in batch.keys():
@@ -208,10 +197,9 @@ def test_dict_buffer_get(seed):
             elif key == 'next_observations':
                 for obs_key in batch[key].keys():
                     item = kwargs['next_'+obs_key][rows, columns]
-                    assert np.allclose(item, 
-                                       batch[key][obs_key])
+                    assert np.allclose(item, batch[key][obs_key])
             else:
                 item = kwargs[key][rows, columns]
                 assert np.allclose(item, batch[key])
 
-        i += 1
+        index += batch_size

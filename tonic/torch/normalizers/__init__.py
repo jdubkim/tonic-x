@@ -1,5 +1,6 @@
 from .mean_stds import MeanStd
-from .observation_normalizer import ObservationNormalizer, DictObservationNormalizer
+from .observation_normalizer import ObservationNormalizer, \
+    DictObservationNormalizer
 from .returns import Return
 
 

@@ -19,7 +19,7 @@ from .utils import default_dense_kwargs, MLP
 __all__ = [
     default_dense_kwargs, MLP, ObservationActionEncoder,
     ObservationEncoder, DictObservationEncoder, DictObservationActionEncoder,
-    SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead, 
-    GaussianPolicyHead, DeterministicPolicyHead, Actor, Critic, 
-    DistributionalValueHead, ValueHead, ActorCritic, ActorCriticWithTargets, 
+    SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead,
+    GaussianPolicyHead, DeterministicPolicyHead, Actor, Critic,
+    DistributionalValueHead, ValueHead, ActorCritic, ActorCriticWithTargets,
     ActorTwinCriticWithTargets]

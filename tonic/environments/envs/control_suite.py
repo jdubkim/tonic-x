@@ -24,9 +24,10 @@ class ControlSuiteEnvironment(gym.core.Env):
         observation_spec = self.environment.observation_spec()
         if flatten:
             dim = sum([np.int(np.prod(spec.shape))
-                    for spec in observation_spec.values()])
+                       for spec in observation_spec.values()])
             high = np.full(dim, np.inf, np.float32)
-            self.observation_space = gym.spaces.Box(-high, high, dtype=np.float32)
+            self.observation_space = gym.spaces.Box(-high, high,
+                                                    dtype=np.float32)
         else:
             self.observation_space = observation_spec
             self.observation_space.spaces = OrderedDict(
@@ -72,10 +73,9 @@ class ControlSuiteEnvironment(gym.core.Env):
         return self.environment.physics.render(
             height=height, width=width, camera_id=camera_id)
 
-            
+
 def _flatten_observation(observation):
     '''Turns OrderedDict observations into vectors.'''
     observation = [np.array([o]) if np.isscalar(o) else o.ravel()
                    for o in observation.values()]
     return np.concatenate(observation, axis=0)
-

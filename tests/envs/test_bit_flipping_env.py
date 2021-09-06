@@ -2,7 +2,7 @@ from gym import spaces
 import numpy as np
 import pytest
 
-from tonic.environments.simple_envs import BitFlippingEnv
+from tonic.environments import BitFlippingEnv
 
 
 def test_env_init():
@@ -12,7 +12,7 @@ def test_env_init():
     assert obs['observation'].shape == (10,)
     assert obs['achieved_goal'].shape == (10,)
     assert obs['desired_goal'].shape == (10,)
-    
+
 
 def test_env_discrete_action():
     env = BitFlippingEnv(n_bits=10, continuous=False)
@@ -44,9 +44,9 @@ def test_env_continuous_action():
     assert not np.allclose(obs['observation'], next_obs['observation'])
 
 
-@pytest.mark.parametrize("n_bits", [10, 20, 30]) 
+@pytest.mark.parametrize("n_bits", [10, 20, 30])
 def test_env_timeout(n_bits):
-    """ Env should timeout when steps equals number of bits. """ 
+    """ Env should timeout when steps equals number of bits. """
     env = BitFlippingEnv(n_bits=n_bits, continuous=False)
     env.reset()
 
@@ -59,7 +59,7 @@ def test_env_timeout(n_bits):
         curr_steps += 1
 
     assert curr_steps == n_bits
-        
+
 
 def test_return_is_success_correctly():
     # Test if environment returns is_success correctly when reached desird goal

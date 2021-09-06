@@ -14,8 +14,8 @@ def default_model():
             encoder=models.DictObservationActionEncoder(),
             torso=models.MLP((256, 256), 'relu'),
             head=models.ValueHead()),
-        observation_normalizer=
-        normalizers.DictObservationNormalizer(normalizers.MeanStd),
+        observation_normalizer=normalizers.DictObservationNormalizer(
+            normalizers.MeanStd),
         target_coeff=0.05)
 
 

@@ -4,7 +4,6 @@ import gin
 import numpy as np
 
 from tonic import agents
-from tonic import utils
 from tonic.utils import helpers
 
 

@@ -157,4 +157,3 @@ class ActorTwinCriticWithTargets(tf.keras.Model):
     def update_targets(self):
         for o, t in zip(self.online_variables, self.target_variables):
             t.assign((1 - self.target_coeff) * t + self.target_coeff * o)
-

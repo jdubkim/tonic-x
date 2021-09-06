@@ -1,9 +1,8 @@
-from os import environ
 import gin
 import tensorflow as tf
 
-from tonic import explorations, logger, replays
-from tonic.tensorflow import agents, models, normalizers, updaters
+from tonic import logger
+from tonic.tensorflow import agents, models, normalizers
 from tonic.utils import helpers
 
 
@@ -17,7 +16,8 @@ def default_model():
             encoder=models.DictObservationActionEncoder(),
             torso=models.MLP((256, 256, 256), 'relu'),
             head=models.ValueHead()),
-        observation_normalizer=normalizers.DictObservationNormalizer(normalizers.MeanStd),
+        observation_normalizer=normalizers.DictObservationNormalizer(
+            normalizers.MeanStd),
         target_coeff=0.05)
 
 
@@ -61,7 +61,8 @@ class DDPG(agents.Agent):
         # Greedy actions for testing.
         return self._greedy_actions(observations).numpy()
 
-    def update(self, observations, rewards, resets, terminations, environment_infos):
+    def update(self, observations, rewards, resets, terminations,
+               environment_infos):
         # Store the last transitions in the replay.
         self.replay.store(
             observations=self.last_observations, actions=self.last_actions,

@@ -11,4 +11,3 @@ def check_environment_type(environment, environment_type):
             break
     # Check if the environment matches the given type.
     return isinstance(environment, environment_type)
-            

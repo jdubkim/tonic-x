@@ -1,6 +1,3 @@
-from collections import deque
-from typing import Dict
-
 import gin
 import numpy as np
 
@@ -99,14 +96,13 @@ class Buffer:
 @gin.configurable
 class DictBuffer(Buffer):
     def __init__(
-        self, size=int(1e6), num_steps=1, batch_iterations=50, batch_size=100, 
-        discount_factor=0.99, steps_before_batches=int(1e4), 
+        self, size=int(1e6), num_steps=1, batch_iterations=50, batch_size=100,
+        discount_factor=0.99, steps_before_batches=int(1e4),
         steps_between_batches=50
     ):
-        super(DictBuffer, self).__init__(size, num_steps, batch_iterations,
-                                        batch_size, discount_factor, 
-                                        steps_before_batches, 
-                                        steps_between_batches)
+        super(DictBuffer, self).__init__(
+            size, num_steps, batch_iterations, batch_size, discount_factor,
+            steps_before_batches, steps_between_batches)
 
     def _unpack_dict_observations(self, kwargs):
         # Unpack observations
@@ -134,7 +130,7 @@ class DictBuffer(Buffer):
         kwargs.pop('environment_infos')
 
         kwargs = self._unpack_dict_observations(kwargs)
-        
+
         # Create the named buffers.
         if self.buffers is None:
             self.num_workers = len(list(kwargs.values())[0])
@@ -167,17 +163,17 @@ class DictBuffer(Buffer):
             transitions = {}
 
             for key in keys:
-                # Zip dictionary observations 
+                # Zip dictionary observations
                 if key == 'observations':
                     transitions[key] = {
-                        k: self.buffers[k][rows, columns] 
+                        k: self.buffers[k][rows, columns]
                         for k in self.observation_keys}
 
-                # Zip dictionary observations 
+                # Zip dictionary observations
                 elif key == 'next_observations':
                     transitions[key] = {
-                        k: self.buffers["next_" + k][rows, columns] \
-                            for k in self.observation_keys}
+                        k: self.buffers["next_"+k][rows, columns]
+                        for k in self.observation_keys}
                 else:
                     transitions[key] = self.buffers[key][rows, columns]
 
@@ -188,13 +184,13 @@ class DictBuffer(Buffer):
 class HerBuffer(DictBuffer):
     def __init__(
         self, size=int(1e6), num_steps=1, batch_iterations=40, batch_size=1024,
-        discount_factor=0.98, steps_before_batches=int(1e4),
-        steps_between_batches=50, goal_selection_strategy='future',
-        replay_k=4, reward_function=None):
+            discount_factor=0.98, steps_before_batches=int(1e4),
+            steps_between_batches=50, goal_selection_strategy='future',
+            replay_k=4, reward_function=None):
 
         super(HerBuffer, self).__init__(size, num_steps, batch_iterations,
                                         batch_size, discount_factor,
-                                        steps_before_batches, 
+                                        steps_before_batches,
                                         steps_between_batches)
 
         self.goal_selection_strategy = goal_selection_strategy
@@ -217,7 +213,6 @@ class HerBuffer(DictBuffer):
 
         kwargs.pop('environment_infos')
 
-        
         if 'terminations' in kwargs:
             continuations = np.float32(1 - kwargs['terminations'])
             kwargs['discounts'] = continuations * self.discount_factor
@@ -243,7 +238,7 @@ class HerBuffer(DictBuffer):
         # Store the new values.
         for key, val in kwargs.items():
             self.buffers[key][self.index] = val
-        
+
         # Store the episode of the current timestep.
         self.buffers['episode_n'][self.index] = self.episodes_n
 
@@ -258,7 +253,7 @@ class HerBuffer(DictBuffer):
 
         if self.index >= self.max_size:
             self.index = self.index % self.max_size
-            self.reset_index = [True for _ in range(self.num_workers)] 
+            self.reset_index = [True for _ in range(self.num_workers)]
 
         # Store the timestep and increment episode_n if the environment resets
         for i, reset in enumerate(kwargs['resets']):
@@ -269,10 +264,11 @@ class HerBuffer(DictBuffer):
                 else:
                     self.episode_reset_indices[i].append(self.index)
 
-                # Reset episode_n if the buffer is full and the last episode terminates.
+                # Reset episode_n if the buffer is full
+                # and the last episode terminates.
                 if self.full and self.reset_index[i]:
-                        self.episodes_n[i] = 0
-                        self.reset_index[i] = False
+                    self.episodes_n[i] = 0
+                    self.reset_index[i] = False
                 else:
                     self.episodes_n[i] += 1
 
@@ -287,9 +283,8 @@ class HerBuffer(DictBuffer):
                     transitions[key] = {k: unzipped_transitions[k]
                                         for k in self.observation_keys}
                 elif key == 'next_observations':
-                    transitions[key] = {k: 
-                        unzipped_transitions['next_'+k]
-                        for k in self.observation_keys}
+                    transitions[key] = {k: unzipped_transitions['next_'+k]
+                                        for k in self.observation_keys}
                 else:
                     transitions[key] = unzipped_transitions[key]
 
@@ -309,11 +304,11 @@ class HerBuffer(DictBuffer):
         her_rows = rows[batch_her_proportion]
         her_columns = columns[batch_her_proportion]
 
-        samples = {key: self.buffers[key][rows, columns].copy() 
+        samples = {key: self.buffers[key][rows, columns].copy()
                    for key in self.buffers.keys()}
 
         her_goals = self.sample_goals(her_rows, her_columns)
-        
+
         samples['desired_goal'][batch_her_proportion] = her_goals
         samples['next_desired_goal'][batch_her_proportion] = her_goals
 
@@ -327,17 +322,20 @@ class HerBuffer(DictBuffer):
         return samples
 
     def sample_goals(self, her_rows, her_columns):
-        
+
         episode_n = self.buffers['episode_n'][her_rows, her_columns]
 
         reset_indices = [self.episode_reset_indices[env][n_ep]
                          for (n_ep, env) in zip(episode_n, her_columns)]
-        # Add self.size if reset_index is lower than the start timestep (her_rows)
-        reset_indices = np.array([index + (self.size if index < row else 0) 
-                         for (row, index) in zip(her_rows, reset_indices)])
+        # Add self.size to indices which resets after buffer gets full
+        # and index resets to 0.
+        reset_indices = np.array(
+            [index + (self.size if index < row else 0)
+             for (row, index) in zip(her_rows, reset_indices)])
 
         if self.goal_selection_strategy == 'future':
-            her_indices = self.np_random.randint(her_rows, reset_indices) % self.size
+            her_indices = self.np_random.randint(her_rows, reset_indices) \
+                % self.size
         elif self.goal_selection_strategy == 'final':
             her_indices = reset_indices - 1
         elif self.goal_selection_strategy == 'episode':
