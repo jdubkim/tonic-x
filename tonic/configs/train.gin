@@ -5,10 +5,6 @@ train.environment = %ENVIRONMENT
 train.before_training = %before_training
 train.after_training = %after_training
 
-# Environment configurations
-build_environment.worker_groups = %parallel
-build_environment.workers_per_group = %sequential
-
 # Logger configurations
 Logger.path = %PATH
 Logger.environment_name = %environment_name

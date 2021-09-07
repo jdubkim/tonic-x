@@ -279,7 +279,7 @@ class MaximumAPosterioriPolicyOptimization:
         self.log_temperature = tf.Variable(
             [self.initial_log_temperature], dtype=tf.float32)
         self.dual_variables.append(self.log_temperature)
-        shape = [action_space.shape[0]] if self.per_dim_constraining else [1]
+        shape = [helpers.action_size(action_space) ] if self.per_dim_constraining else [1]
         self.log_alpha_mean = tf.Variable(
             tf.fill(shape, self.initial_log_alpha_mean), dtype=tf.float32)
         self.dual_variables.append(self.log_alpha_mean)

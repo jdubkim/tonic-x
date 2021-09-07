@@ -57,7 +57,7 @@ def test_her_buffer_store_one_step(seed):
         rewards=infos['rewards'],
         resets=infos['resets'],
         terminations=infos['terminations'],
-        environment_infos=infos['environment_infos']
+        environment_infos=infos['env_infos']
     )
 
     # Buffer should now be created
@@ -137,7 +137,7 @@ def test_her_buffer_store_multi_steps(seed, max_steps):
             'rewards': infos['rewards'],
             'terminations': infos['terminations'],
             'resets': infos['resets'],
-            'environment_infos': infos['environment_infos']
+            'environment_infos': infos['env_infos']
         }
 
         # Store an item into dictionary buffer.
@@ -156,8 +156,6 @@ def test_her_buffer_store_multi_steps(seed, max_steps):
                 items[key].append(kwargs[key])
 
         steps += 1
-
-    items.pop('environment_infos')
 
     for key in items.keys():
         if key in ['terminations', 'resets']:

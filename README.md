@@ -68,17 +68,10 @@ pip install tensorflow torch
 
 Use TensorFlow or PyTorch to train an agent, for example using:
 ```bash
-python3 -m tonic.train \
---header 'import tonic.torch' \
---agent 'tonic.torch.agents.PPO()' \
---environment 'tonic.environments.Gym("BipedalWalker-v3")' \
---name PPO-X \
---seed 0
+python3 -m tonic.train --gin_file=tonic/configs/torch/ppo.gin
 ```
 
-Snippets of Python code are used to directly configure the experiment. This is
-a very powerful feature allowing to configure agents and environments with
-various arguments or even load custom modules without adding them to the
+Default settings for each agent is configured using a library called 'gin'. You can check the settings under 'tonic/configs/' directory. Gin is a very powerful tool allowing to configure agents and environments with various arguments or even load custom modules without adding them to the
 library. For example:
 ```bash
 python3 -m tonic.train \

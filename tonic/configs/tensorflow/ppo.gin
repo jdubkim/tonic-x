@@ -4,9 +4,13 @@ import tonic.tensorflow
 
 # Train Settings
 AGENT = @PPO()
-ENVIRONMENT = @Bullet
-Bullet.name = %environment_name
-environment_name = 'AntBulletEnv-v0'
+ENVIRONMENT = @Gym
+Gym.name = %environment_name
+environment_name = 'MountainCar-v0'
+
+Gym.worker_groups = %parallel
+Gym.workers_per_group = %sequential
+environment_wrapper.scaled_actions = False
 
 trainer = @Trainer()
 NAME = None
@@ -31,6 +35,6 @@ mlp.units = (64, 64)
 mlp.activation = 'tanh'
 
 # Macros
-initialize.seed = %seed
+Trainer.initialize.seed = %seed
 Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]
 

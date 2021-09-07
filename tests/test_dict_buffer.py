@@ -57,7 +57,7 @@ def test_dict_buffer_store_one_step(seed):
         rewards=infos['rewards'],
         resets=infos['resets'],
         terminations=infos['terminations'],
-        environment_infos=infos['environment_infos']
+        environment_infos=infos['env_infos']
     )
 
     # Buffer should now be created
@@ -126,7 +126,7 @@ def test_dict_buffer_store_multi_steps(seed, n_steps=10):
             'rewards': infos['rewards'],
             'terminations': infos['terminations'],
             'resets': infos['resets'],
-            'environment_infos': infos['environment_infos']
+            'environment_infos': infos['env_infos']
         }
 
         # Store an item into dictionary buffer.
@@ -152,12 +152,10 @@ def test_dict_buffer_store_multi_steps(seed, n_steps=10):
     for key in items.keys():
         if key in ['terminations', 'resets']:
             items[key] = np.array(items[key], dtype=np.int64)
-        elif key == 'environment_infos':
+        elif key == 'env_infos':
             pass
         else:
             items[key] = np.array(items[key], dtype=np.float32)
-
-    items.pop('environment_infos')
 
     for key in items.keys():
         assert np.allclose(dictbuffer.buffers[key][:steps], items[key])

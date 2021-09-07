@@ -22,9 +22,11 @@ FLAGS = flags.FLAGS
 def train(agent, environment, trainer, before_training, after_training):
     '''Trains an agent on an environment.'''
 
+    print(environment())
     # Build the train and test environments.
-    environment = environment()
-    test_environment = environment(worker_groups=1, workers_per_group=1)
+    environment_ = environment
+    environment = environment_()
+    test_environment = environment_(worker_groups=1, workers_per_group=1)
 
     # Initialize the logger to save data to the path environment/name/seed.
     tonic.logger.initialize(script_path=__file__)
@@ -33,6 +35,7 @@ def train(agent, environment, trainer, before_training, after_training):
     trainer.initialize(
         agent=agent, environment=environment,
         test_environment=test_environment)
+
 
     # Run some code before training.
     if before_training:

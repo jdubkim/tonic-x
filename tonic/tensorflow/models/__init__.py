@@ -3,6 +3,7 @@ from .actor_critics import ActorCriticWithTargets
 from .actor_critics import ActorTwinCriticWithTargets
 
 from .actors import Actor
+from .actors import CateogoricalPolicyHead
 from .actors import DetachedScaleGaussianPolicyHead
 from .actors import DeterministicPolicyHead
 from .actors import GaussianPolicyHead
@@ -19,7 +20,7 @@ from .utils import default_dense_kwargs, MLP
 __all__ = [
     default_dense_kwargs, MLP, ObservationActionEncoder,
     ObservationEncoder, DictObservationEncoder, DictObservationActionEncoder,
-    SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead,
-    GaussianPolicyHead, DeterministicPolicyHead, Actor, Critic,
-    DistributionalValueHead, ValueHead, ActorCritic, ActorCriticWithTargets,
-    ActorTwinCriticWithTargets]
+    SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead, 
+    CateogoricalPolicyHead, GaussianPolicyHead, DeterministicPolicyHead, 
+    Actor, Critic, DistributionalValueHead, ValueHead, ActorCritic, 
+    ActorCriticWithTargets, ActorTwinCriticWithTargets]

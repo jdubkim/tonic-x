@@ -37,8 +37,6 @@ class Buffer:
             continuations = np.float32(1 - kwargs['terminations'])
             kwargs['discounts'] = continuations * self.discount_factor
 
-        kwargs.pop('infos')
-
         # Create the named buffers.
         if self.buffers is None:
             self.num_workers = len(list(kwargs.values())[0])
@@ -127,8 +125,6 @@ class DictBuffer(Buffer):
             continuations = np.float32(1 - kwargs['terminations'])
             kwargs['discounts'] = continuations * self.discount_factor
 
-        kwargs.pop('environment_infos')
-
         kwargs = self._unpack_dict_observations(kwargs)
 
         # Create the named buffers.
@@ -183,11 +179,11 @@ class DictBuffer(Buffer):
 @gin.configurable
 class HerBuffer(DictBuffer):
     def __init__(
-        self, size=int(1e6), num_steps=1, batch_iterations=40, batch_size=1024,
-            discount_factor=0.98, steps_before_batches=int(1e4),
-            steps_between_batches=50, goal_selection_strategy='future',
-            replay_k=4, reward_function=None):
-
+        self, size=int(1e6), num_steps=1, batch_iterations=40, batch_size=256,
+        discount_factor=0.98, steps_before_batches=int(1e4),
+        steps_between_batches=50, goal_selection_strategy='future',
+        replay_k=4, reward_function=None
+    ):
         super(HerBuffer, self).__init__(size, num_steps, batch_iterations,
                                         batch_size, discount_factor,
                                         steps_before_batches,
@@ -210,8 +206,6 @@ class HerBuffer(DictBuffer):
         self.reward_function = reward_function
 
     def store(self, **kwargs):
-
-        kwargs.pop('environment_infos')
 
         if 'terminations' in kwargs:
             continuations = np.float32(1 - kwargs['terminations'])
@@ -334,14 +328,14 @@ class HerBuffer(DictBuffer):
              for (row, index) in zip(her_rows, reset_indices)])
 
         if self.goal_selection_strategy == 'future':
-            her_indices = self.np_random.randint(her_rows, reset_indices) \
+            her_rows = self.np_random.randint(her_rows, reset_indices) \
                 % self.size
         elif self.goal_selection_strategy == 'final':
-            her_indices = reset_indices - 1
+            her_rows = reset_indices - 1
         elif self.goal_selection_strategy == 'episode':
-            her_indices = self.np_random.randint(reset_indices)
+            her_rows = self.np_random.randint(reset_indices)
         else:
             raise ValueError(f"{self.goal_selection_strategy} goal selection" +
                              "strategy is not supported.")
 
-        return self.buffers['achieved_goal'][her_indices, her_columns]
+        return self.buffers['achieved_goal'][her_rows, her_columns]

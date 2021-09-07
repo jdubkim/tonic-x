@@ -61,13 +61,12 @@ class DDPG(agents.Agent):
         # Greedy actions for testing.
         return self._greedy_actions(observations).numpy()
 
-    def update(self, observations, rewards, resets, terminations,
-               environment_infos):
+    def update(self, observations, rewards, resets, terminations):
         # Store the last transitions in the replay.
         self.replay.store(
             observations=self.last_observations, actions=self.last_actions,
             next_observations=observations, rewards=rewards, resets=resets,
-            terminations=terminations, environment_infos=environment_infos)
+            terminations=terminations)
 
         # Prepare to update the normalizers.
         if self.model.observation_normalizer:

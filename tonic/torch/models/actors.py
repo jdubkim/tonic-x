@@ -1,6 +1,8 @@
 import gin
 import torch
 
+from tonic.utils import helpers
+
 
 FLOAT_EPSILON = 1e-8
 
@@ -133,7 +135,7 @@ class Actor(torch.nn.Module):
         size = self.encoder.initialize(
             observation_space, observation_normalizer)
         size = self.torso.initialize(size)
-        action_size = action_space.shape[0]
+        action_size = helpers.action_size(action_space) 
         self.head.initialize(size, action_size)
 
     def forward(self, *inputs):

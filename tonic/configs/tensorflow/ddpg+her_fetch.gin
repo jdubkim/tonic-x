@@ -4,7 +4,7 @@ import tonic.tensorflow
 
 # Train Settings
 AGENT = @DDPG()
-ENVIRONMENT = @Gym()
+ENVIRONMENT = @Gym
 Gym.name = %environment_name
 environment_name = 'FetchPush-v1'
 

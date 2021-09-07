@@ -310,7 +310,7 @@ class MaximumAPosterioriPolicyOptimization:
         self.log_temperature = torch.nn.Parameter(torch.as_tensor(
             [self.initial_log_temperature], dtype=torch.float32))
         self.dual_variables.append(self.log_temperature)
-        shape = [action_space.shape[0]] if self.per_dim_constraining else [1]
+        shape = [helpers.action_size(action_space) ] if self.per_dim_constraining else [1]
         self.log_alpha_mean = torch.nn.Parameter(torch.full(
             shape, self.initial_log_alpha_mean, dtype=torch.float32))
         self.dual_variables.append(self.log_alpha_mean)

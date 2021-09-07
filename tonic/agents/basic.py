@@ -16,7 +16,7 @@ class NormalRandom(agents.Agent):
         self.scale = scale
 
     def initialize(self, observation_space, action_space, seed=None):
-        self.action_size = action_space.shape[0]
+        self.action_size = helpers.action_size(action_space) 
         self.np_random = np.random.RandomState(seed)
 
     def step(self, observations):
@@ -36,7 +36,7 @@ class UniformRandom(agents.Agent):
     '''Random agent producing actions from uniform distributions.'''
 
     def initialize(self, observation_space, action_space, seed=None):
-        self.action_size = action_space.shape[0]
+        self.action_size = helpers.action_size(action_space) 
         self.np_random = np.random.RandomState(seed)
 
     def step(self, observations):
@@ -62,7 +62,7 @@ class OrnsteinUhlenbeck(agents.Agent):
         self.dt = dt
 
     def initialize(self, observation_space, action_space, seed=None):
-        self.action_size = action_space.shape[0]
+        self.action_size = helpers.action_size(action_space)  
         self.np_random = np.random.RandomState(seed)
         self.train_actions = None
         self.test_actions = None
@@ -110,7 +110,7 @@ class Constant(agents.Agent):
         self.constant = constant
 
     def initialize(self, observation_space, action_space, seed=None):
-        self.action_size = action_space.shape[0]
+        self.action_size = helpers.action_size(action_space)  
 
     def step(self, observations):
         return self._policy(observations)

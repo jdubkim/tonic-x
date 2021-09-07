@@ -28,7 +28,7 @@ class Environment(abc.ABC):
         pass
 
     def initialize(self, seed):
-        self.distribute_environment()
+        self.distributed_environment = self.distribute_environment()
         self.distributed_environment.initialize(seed)
 
     def start(self):
@@ -36,6 +36,9 @@ class Environment(abc.ABC):
 
     def step(self, actions):
         return self.distributed_environment.step(actions)
+
+    def test_step(self, actions):
+        return self.distributed_environment.test_step(actions)
 
     def render(self, mode, *args, **kwargs):
         return self.distributed_environment.render(mode, *args, **kwargs)
@@ -81,11 +84,11 @@ class Environment(abc.ABC):
         del dummy_environment
 
         if self.worker_groups < 2:
-            self.distributed_environment = environments.Sequential(
+            return environments.Sequential(
                 self.environment, max_episode_steps=max_episode_steps,
                 workers=self.workers_per_group)
 
-        self.distributed_environment = environments.Parallel(
+        return environments.Parallel(
             self.environment, worker_groups=self.worker_groups,
             workers_per_group=self.workers_per_group,
             max_episode_steps=max_episode_steps)

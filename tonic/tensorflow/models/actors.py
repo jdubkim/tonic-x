@@ -3,6 +3,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 from tonic.tensorflow import models
+from tonic.utils import helpers
 
 
 FLOAT_EPSILON = 1e-8
@@ -131,7 +132,7 @@ class Actor(tf.keras.Model):
         self, observation_space, action_space, observation_normalizer=None
     ):
         self.encoder.initialize(observation_normalizer)
-        self.head.initialize(action_space.shape[0])
+        self.head.initialize(helpers.action_size(action_space) )
 
     def call(self, *inputs):
         out = self.encoder(*inputs)

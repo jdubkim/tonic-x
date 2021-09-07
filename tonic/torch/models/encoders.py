@@ -1,6 +1,7 @@
 import gin
 import torch
 
+from tonic.utils import helpers
 
 @gin.configurable
 class ObservationEncoder(torch.nn.Module):
@@ -25,7 +26,7 @@ class ObservationActionEncoder(torch.nn.Module):
     ):
         self.observation_normalizer = observation_normalizer
         observation_size = observation_space.shape[0]
-        action_size = action_space.shape[0]
+        action_size = helpers.action_size(action_space) 
         return observation_size + action_size
 
     def forward(self, observations, actions):

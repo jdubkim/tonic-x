@@ -10,7 +10,7 @@ def default_model():
         actor=models.Actor(
             encoder=models.ObservationEncoder(),
             torso=models.MLP((64, 64), 'tanh'),
-            head=models.DetachedScaleGaussianPolicyHead()),
+            head=models.CateogoricalPolicyHead()),
         critic=models.Critic(
             encoder=models.ObservationEncoder(),
             torso=models.MLP((64, 64), 'tanh'),
