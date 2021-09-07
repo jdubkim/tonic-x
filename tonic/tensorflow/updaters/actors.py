@@ -4,6 +4,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 from tonic.tensorflow import updaters
+from tonic.utils import helpers
 
 
 FLOAT_EPSILON = 1e-8
@@ -279,7 +280,8 @@ class MaximumAPosterioriPolicyOptimization:
         self.log_temperature = tf.Variable(
             [self.initial_log_temperature], dtype=tf.float32)
         self.dual_variables.append(self.log_temperature)
-        shape = [helpers.action_size(action_space) ] if self.per_dim_constraining else [1]
+        shape = [helpers.action_size(action_space)] \
+            if self.per_dim_constraining else [1]
         self.log_alpha_mean = tf.Variable(
             tf.fill(shape, self.initial_log_alpha_mean), dtype=tf.float32)
         self.dual_variables.append(self.log_alpha_mean)

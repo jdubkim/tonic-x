@@ -36,7 +36,6 @@ def train(agent, environment, trainer, before_training, after_training):
         agent=agent, environment=environment,
         test_environment=test_environment)
 
-
     # Run some code before training.
     if before_training:
         if '.py' in before_training:

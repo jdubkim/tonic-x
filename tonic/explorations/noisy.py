@@ -13,7 +13,7 @@ class NoActionNoise:
 
     def initialize(self, policy, action_space, seed=None):
         self.policy = policy
-        self.action_size = helpers.action_size(action_space)  
+        self.action_size = helpers.action_size(action_space)
         self.np_random = np.random.RandomState(seed)
 
     def __call__(self, observations, steps):
@@ -37,7 +37,7 @@ class NormalActionNoise:
 
     def initialize(self, policy, action_space, seed=None):
         self.policy = policy
-        self.action_size = helpers.action_size(action_space) 
+        self.action_size = helpers.action_size(action_space)
         self.np_random = np.random.RandomState(seed)
 
     def __call__(self, observations, steps):

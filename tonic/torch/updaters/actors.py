@@ -2,6 +2,7 @@ import gin
 import torch
 
 from tonic.torch import models, updaters  # noqa
+from tonic.utils import helpers
 
 
 FLOAT_EPSILON = 1e-8
@@ -310,7 +311,8 @@ class MaximumAPosterioriPolicyOptimization:
         self.log_temperature = torch.nn.Parameter(torch.as_tensor(
             [self.initial_log_temperature], dtype=torch.float32))
         self.dual_variables.append(self.log_temperature)
-        shape = [helpers.action_size(action_space) ] if self.per_dim_constraining else [1]
+        shape = [helpers.action_size(action_space)] \
+            if self.per_dim_constraining else [1]
         self.log_alpha_mean = torch.nn.Parameter(torch.full(
             shape, self.initial_log_alpha_mean, dtype=torch.float32))
         self.dual_variables.append(self.log_alpha_mean)

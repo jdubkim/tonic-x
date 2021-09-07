@@ -132,7 +132,7 @@ class Actor(tf.keras.Model):
         self, observation_space, action_space, observation_normalizer=None
     ):
         self.encoder.initialize(observation_normalizer)
-        self.head.initialize(helpers.action_size(action_space) )
+        self.head.initialize(helpers.action_size(action_space))
 
     def call(self, *inputs):
         out = self.encoder(*inputs)

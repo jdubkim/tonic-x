@@ -3,6 +3,7 @@ import torch
 
 from tonic.utils import helpers
 
+
 @gin.configurable
 class ObservationEncoder(torch.nn.Module):
     def initialize(

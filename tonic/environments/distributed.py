@@ -64,7 +64,7 @@ class Sequential:
             rewards=np.array(rewards, np.float32),
             resets=np.array(resets, np.bool),
             terminations=np.array(terminations, np.bool))
-            
+
         return observations, infos
 
     def test_step(self, actions):
