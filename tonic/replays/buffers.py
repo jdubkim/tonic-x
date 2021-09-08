@@ -311,7 +311,8 @@ class HerBuffer(DictBuffer):
 
         episode_n = self.buffers['episode_n'][her_rows, her_columns]
 
-        end_of_episodes = self.buffers['end_of_episodes'][episode_n, her_columns]
+        end_of_episodes = \
+            self.buffers['end_of_episodes'][episode_n, her_columns]
 
         # Add self.size to indices where start index is bigger than
         # index at the end of episode.

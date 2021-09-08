@@ -20,6 +20,6 @@ __all__ = [
     default_dense_kwargs, MLP, ObservationActionEncoder,
     ObservationEncoder, DictObservationEncoder, DictObservationActionEncoder,
     SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead,
-    GaussianPolicyHead, DeterministicPolicyHead, Actor, Critic, 
-    DistributionalValueHead, ValueHead, ActorCritic, ActorCriticWithTargets, 
+    GaussianPolicyHead, DeterministicPolicyHead, Actor, Critic,
+    DistributionalValueHead, ValueHead, ActorCritic, ActorCriticWithTargets,
     ActorTwinCriticWithTargets]
