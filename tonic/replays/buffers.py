@@ -224,47 +224,39 @@ class HerBuffer(DictBuffer):
 
             self.buffers['episode_n'] = np.full(
                 (self.max_size, self.num_workers), np.nan, np.int)
+            self.buffers['end_of_episodes'] = np.full(
+                (self.max_size, self.num_workers), np.nan, np.int)
 
-            self.episode_reset_indices = [[] for _ in range(self.num_workers)]
-            self.episodes_n = np.zeros((self.num_workers), dtype=np.int)
-            self.reset_index = [False for _ in range(self.num_workers)]
+            # Keep track of episode number for each environment.
+            self.current_episode = np.zeros((self.num_workers), dtype=np.int)
 
         # Store the new values.
         for key, val in kwargs.items():
             self.buffers[key][self.index] = val
 
         # Store the episode of the current timestep.
-        self.buffers['episode_n'][self.index] = self.episodes_n
+        self.buffers['episode_n'][self.index] = self.current_episode
+        # Store the current timestep as the end of episode.
+        self.buffers['end_of_episodes'][self.current_episode] = self.index
 
         # Accumulate values for n-step returns.
         if self.num_steps > 1:
             self.accumulate_n_steps(kwargs)
 
-        self.index = self.index + 1
+        self.index = (self.index + 1) % self.max_size
         self.size = min(self.size + 1, self.max_size)
         self.full = (self.size == self.max_size)
         self.steps += 1
 
-        if self.index >= self.max_size:
-            self.index = self.index % self.max_size
-            self.reset_index = [True for _ in range(self.num_workers)]
+        # Reset current_episode if buffers['end_of_episodes'] is full.
+        for i in range(self.num_workers):
+            if self.current_episode[i] >= self.max_size:
+                self.current_episode[i] = 0
 
         # Store the timestep and increment episode_n if the environment resets
         for i, reset in enumerate(kwargs['resets']):
             if reset:
-                if self.episodes_n[i] < len(self.episode_reset_indices[i]):
-                    self.episode_reset_indices[i][self.episodes_n[i]] = \
-                        self.index
-                else:
-                    self.episode_reset_indices[i].append(self.index)
-
-                # Reset episode_n if the buffer is full
-                # and the last episode terminates.
-                if self.full and self.reset_index[i]:
-                    self.episodes_n[i] = 0
-                    self.reset_index[i] = False
-                else:
-                    self.episodes_n[i] += 1
+                self.current_episode[i] += 1
 
     def get(self, *keys):
         '''Get batches from named buffers.'''
@@ -319,21 +311,19 @@ class HerBuffer(DictBuffer):
 
         episode_n = self.buffers['episode_n'][her_rows, her_columns]
 
-        reset_indices = [self.episode_reset_indices[env][n_ep]
-                         for (n_ep, env) in zip(episode_n, her_columns)]
-        # Add self.size to indices which resets after buffer gets full
-        # and index resets to 0.
-        reset_indices = np.array(
-            [index + (self.size if index < row else 0)
-             for (row, index) in zip(her_rows, reset_indices)])
+        end_of_episodes = self.buffers['end_of_episodes'][episode_n, her_columns]
+
+        # Add self.size to indices where start index is bigger than
+        # index at the end of episode.
+        end_of_episodes[end_of_episodes < her_rows] += self.size
 
         if self.goal_selection_strategy == 'future':
-            her_rows = self.np_random.randint(her_rows, reset_indices) \
+            her_rows = self.np_random.randint(her_rows, end_of_episodes+1) \
                 % self.size
         elif self.goal_selection_strategy == 'final':
-            her_rows = reset_indices - 1
+            her_rows = end_of_episodes
         elif self.goal_selection_strategy == 'episode':
-            her_rows = self.np_random.randint(reset_indices)
+            her_rows = self.np_random.randint(end_of_episodes+1)
         else:
             raise ValueError(f"{self.goal_selection_strategy} goal selection" +
                              "strategy is not supported.")

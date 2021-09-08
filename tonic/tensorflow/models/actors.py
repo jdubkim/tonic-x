@@ -121,6 +121,23 @@ class DeterministicPolicyHead(tf.keras.Model):
 
 
 @gin.configurable
+class CateogoricalPolicyHead(tf.keras.Model):
+    def __init__(self, dense_kwargs=None):
+        super().__init__()
+        if dense_kwargs is None:
+            dense_kwargs = models.default_dense_kwargs()
+        self.dense_kwargs = dense_kwargs
+
+    def initialize(self, action_size):
+        self.action_layer = tf.keras.layers.Dense(
+            action_size, None, **self.dense_kwargs)
+
+    def call(self, inputs):
+        logits = self.action_layer(inputs)
+        return tfp.distributions.Categorical(logits)
+
+
+@gin.configurable
 class Actor(tf.keras.Model):
     def __init__(self, encoder, torso, head):
         super().__init__()

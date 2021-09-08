@@ -5,13 +5,15 @@ import tonic.tensorflow
 # Train Settings
 AGENT = @A2C()
 ENVIRONMENT = @Bullet
-Bullet.name = %environment_name
-environment_name = 'AntBulletEnv-v0'
+Environment.name = %environment_name
+Environment.worker_groups = %parallel
+Environment.workers_per_group = %parallel
 
+environment_name = 'AntBulletEnv-v0'
 trainer = @Trainer()
 NAME = None
 sequential = 1
-parallel = 1
+parallel = 4
 seed = 10
 
 before_training = None
@@ -31,5 +33,5 @@ mlp.units = (64, 64)
 mlp.activation = 'tanh'
 
 # Macros
-initialize.seed = %seed
+Trainer.initialize.seed = %seed
 Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

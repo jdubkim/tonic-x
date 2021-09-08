@@ -29,10 +29,7 @@ class Trainer:
             environment.initialize(seed=seed)
 
         if test_environment and seed is not None:
-            print(test_environment.worker_groups)
             test_environment.initialize(seed=seed + 10000)
-            print(test_environment.distributed_environment)
-            exit()
 
         agent.initialize(
             observation_space=environment.observation_space,
@@ -144,7 +141,7 @@ class Trainer:
                 # Take a step in the environment.
                 self.test_observations, infos = \
                     self.test_environment.test_step(actions)
-                env_infos = infos.pop('environment_infos')
+                env_infos = infos.pop('env_infos')
 
                 self.agent.test_update(**infos)
 

@@ -7,6 +7,7 @@ import gym
 from tonic import environments
 
 
+@gin.configurable
 class Environment(abc.ABC):
     def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
@@ -96,7 +97,7 @@ class Environment(abc.ABC):
 
 @gin.configurable
 class Gym(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
         super(Gym, self).__init__(name, worker_groups, workers_per_group,
                                   *args, **kwargs)
@@ -112,7 +113,7 @@ class Gym(Environment):
 
 @gin.configurable
 class Bullet(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
         super(Bullet, self).__init__(name, worker_groups, workers_per_group,
                                      *args, **kwargs)
@@ -124,7 +125,7 @@ class Bullet(Environment):
 
 @gin.configurable
 class ControlSuite(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
         super(Bullet, self).__init__(name, worker_groups, workers_per_group,
                                      *args, **kwargs)
@@ -138,7 +139,7 @@ class ControlSuite(Environment):
 
 @gin.configurable
 class SimpleEnv(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
         super(SimpleEnv, self).__init__(name, worker_groups, workers_per_group,
                                         *args, **kwargs)

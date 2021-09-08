@@ -101,7 +101,8 @@ class Sequential:
             observations=next_observations,
             rewards=np.array(rewards, np.float32),
             resets=np.array(resets, np.bool),
-            terminations=np.array(terminations, np.bool))
+            terminations=np.array(terminations, np.bool),
+            env_infos=env_infos)
             
         return observations, infos
 
@@ -272,21 +273,3 @@ class Parallel:
             dict_obs[key] = np.array(dict_obs[key])
 
         return dict_obs
-
-
-@gin.configurable
-def Environment(builder, worker_groups=1, workers_per_group=1): # noqa
-    '''Distributes workers over parallel and sequential groups.'''
-    dummy_environment = builder()
-    max_episode_steps = dummy_environment.max_episode_steps
-    del dummy_environment
-
-    if worker_groups < 2:
-        return Sequential(
-            builder, max_episode_steps=max_episode_steps,
-            workers=workers_per_group)
-
-    return Parallel(
-        builder, worker_groups=worker_groups,
-        workers_per_group=workers_per_group,
-        max_episode_steps=max_episode_steps)
