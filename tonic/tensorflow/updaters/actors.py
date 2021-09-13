@@ -28,8 +28,10 @@ class StochasticPolicyGradient:
             loss, kl = 0., 0.
             distributions = self.model.actor(observations)
             entropy = tf.reduce_mean(distributions.entropy())
-            std = tf.reduce_mean(distributions.stddev())
-
+            try:
+                std = tf.reduce_mean(distributions.stddev())
+            except NotImplementedError:
+                std = 'N/A'
         else:
             with tf.GradientTape() as tape:
                 distributions = self.model.actor(observations)
@@ -46,8 +48,11 @@ class StochasticPolicyGradient:
             self.optimizer.apply_gradients(zip(gradients, self.variables))
 
             kl = tf.reduce_mean(log_probs - new_log_probs)
-            std = tf.reduce_mean(distributions.stddev())
-
+            try:
+                std = tf.reduce_mean(distributions.stddev())
+            except NotImplementedError:
+                std = 'N/A'
+        
         return dict(loss=loss, kl=kl, entropy=entropy, std=std)
 
 
@@ -74,7 +79,10 @@ class ClippedRatio:
             loss, kl, clip_fraction = 0., 0., 0.
             distributions = self.model.actor(observations)
             entropy = tf.reduce_mean(distributions.entropy())
-            std = tf.reduce_mean(distributions.stddev())
+            try:
+                std = tf.reduce_mean(distributions.stddev())
+            except NotImplementedError:
+                std = 'N/A'
 
         else:
             with tf.GradientTape() as tape:
@@ -101,7 +109,10 @@ class ClippedRatio:
             clipped = tf.logical_or(
                 ratios_1 > ratio_high, ratios_1 < ratio_low)
             clip_fraction = tf.reduce_mean(tf.cast(clipped, tf.float32))
-            std = tf.reduce_mean(distributions.stddev())
+            try:
+                std = tf.reduce_mean(distributions.stddev())
+            except NotImplementedError:
+                std = 'N/A'
 
         return dict(
             loss=loss, kl=kl, entropy=entropy, clip_fraction=clip_fraction,

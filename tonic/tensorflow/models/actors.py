@@ -124,6 +124,7 @@ class DeterministicPolicyHead(tf.keras.Model):
 class CateogoricalPolicyHead(tf.keras.Model):
     def __init__(self, dense_kwargs=None):
         super().__init__()
+        self.distribution = tfp.distributions.Categorical
         if dense_kwargs is None:
             dense_kwargs = models.default_dense_kwargs()
         self.dense_kwargs = dense_kwargs
@@ -134,7 +135,7 @@ class CateogoricalPolicyHead(tf.keras.Model):
 
     def call(self, inputs):
         logits = self.action_layer(inputs)
-        return tfp.distributions.Categorical(logits)
+        return self.distribution(logits)
 
 
 @gin.configurable

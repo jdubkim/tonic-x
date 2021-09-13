@@ -7,7 +7,7 @@ import gin
 import numpy as np
 
 import tonic  # noqa
-from tonic.environments import Bullet
+from tonic.environments import Bullet, ControlSuite, Gym
 
 
 flags.DEFINE_multi_string(
@@ -188,8 +188,7 @@ def play(path='.', checkpoint='950000', seed=10, agent=None, environment=None):
             checkpoint_path = None
 
     # Build the environment
-    _environment = environment
-    environment = tonic.environments.Environment(_environment)
+    environment = environment(worker_groups=1, workers_per_group=1)
     environment.initialize(seed)
 
     # Initialize the agent.
@@ -202,10 +201,10 @@ def play(path='.', checkpoint='950000', seed=10, agent=None, environment=None):
         agent.load(checkpoint_path)
 
     # Play with the agent in the environment.
-    if _environment.__name__ == 'ControlSuite':
+    if isinstance(environment, ControlSuite):
         play_control_suite(agent, environment)
     else:
-        if _environment.__name__ == 'Bullet':
+        if isinstance(environment, Bullet):
             environment.render()
         play_gym(agent, environment)
 

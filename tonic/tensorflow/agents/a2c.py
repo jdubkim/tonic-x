@@ -9,11 +9,11 @@ def default_model():
     return models.ActorCritic(
         actor=models.Actor(
             encoder=models.ObservationEncoder(),
-            torso=models.MLP((64, 64), 'tanh'),
-            head=models.DetachedScaleGaussianPolicyHead()),
+            torso=models.MLP((64, 64), 'relu'),
+            head=models.CateogoricalPolicyHead()),
         critic=models.Critic(
             encoder=models.ObservationEncoder(),
-            torso=models.MLP((64, 64), 'tanh'),
+            torso=models.MLP((64, 64), 'relu'),
             head=models.ValueHead()),
         observation_normalizer=normalizers.MeanStd())
 
@@ -56,7 +56,7 @@ class A2C(agents.Agent):
         # Sample actions for testing.
         return self._test_step(observations).numpy()
 
-    def update(self, observations, rewards, resets, terminations):
+    def update(self, observations, rewards, resets, terminations, **kwargs):
         # Store the last transitions in the replay.
         self.replay.store(
             observations=self.last_observations, actions=self.last_actions,

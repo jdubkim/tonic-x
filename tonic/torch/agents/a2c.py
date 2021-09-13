@@ -57,7 +57,7 @@ class A2C(agents.Agent):
         # Sample actions for testing.
         return self._test_step(observations).numpy()
 
-    def update(self, observations, rewards, resets, terminations):
+    def update(self, observations, rewards, resets, terminations, **kwargs):
         # Store the last transitions in the replay.
         self.replay.store(
             observations=self.last_observations, actions=self.last_actions,

@@ -5,15 +5,16 @@ import tonic.tensorflow
 # Train Settings
 AGENT = @A2C()
 ENVIRONMENT = @Bullet
-Environment.name = %environment_name
-Environment.worker_groups = %parallel
-Environment.workers_per_group = %parallel
-
+Bullet.name = %environment_name
 environment_name = 'AntBulletEnv-v0'
+Bullet.worker_groups = %parallel
+Bullet.workers_per_group = %sequential
+environment_wrapper.scaled_actions = False
+
 trainer = @Trainer()
 NAME = None
 sequential = 1
-parallel = 4
+parallel = 1
 seed = 10
 
 before_training = None
@@ -30,7 +31,7 @@ tf.keras.optimizers.Adam.lr = 1e-3
 tf.keras.optimizers.Adam.epsilon = 1e-8
 
 mlp.units = (64, 64)
-mlp.activation = 'tanh'
+mlp.activation = 'relu'
 
 # Macros
 Trainer.initialize.seed = %seed

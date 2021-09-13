@@ -38,10 +38,7 @@ class Environment(abc.ABC):
     def step(self, actions):
         return self.distributed_environment.step(actions)
 
-    def test_step(self, actions):
-        return self.distributed_environment.test_step(actions)
-
-    def render(self, mode, *args, **kwargs):
+    def render(self, mode='human', *args, **kwargs):
         return self.distributed_environment.render(mode, *args, **kwargs)
 
     @gin.configurable

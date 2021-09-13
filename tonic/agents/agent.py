@@ -12,7 +12,7 @@ class Agent(abc.ABC):
         '''Returns actions during training.'''
         pass
 
-    def update(self, observations, rewards, resets, terminations):
+    def update(self, observations, rewards, resets, terminations, **kwargs):
         '''Informs the agent of the latest transitions during training.'''
         pass
 
@@ -21,7 +21,8 @@ class Agent(abc.ABC):
         '''Returns actions during testing.'''
         pass
 
-    def test_update(self, observations, rewards, resets, terminations):
+    def test_update(self, observations, rewards, resets, terminations,
+                    **kwargs):
         '''Informs the agent of the latest transitions during testing.'''
         pass
 
