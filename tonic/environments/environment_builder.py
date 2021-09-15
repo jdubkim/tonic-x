@@ -1,8 +1,7 @@
-import copy
-
 import abc
 import gin
 import gym
+from gym import wrappers
 
 from tonic import environments
 
@@ -51,7 +50,6 @@ class Environment(abc.ABC):
         time_feature=True, see https://arxiv.org/pdf/1712.00378.pdf for more
         details.
         '''
-
         # Get the default time limit.
         if max_episode_steps == 'default':
             max_episode_steps = environment._max_episode_steps
@@ -77,9 +75,7 @@ class Environment(abc.ABC):
     @gin.configurable
     def distribute_environment(self):
         '''Distributes workers over parallel and sequential groups.'''
-        dummy_environment = copy.deepcopy(self.environment)
-        max_episode_steps = dummy_environment.max_episode_steps
-        del dummy_environment
+        max_episode_steps = self.environment.max_episode_steps
 
         if self.worker_groups < 2:
             return environments.Sequential(
@@ -100,12 +96,53 @@ class Gym(Environment):
                                   *args, **kwargs)
 
     def create_environment(self, name, *args, **kwargs):
-        return gym.make(name, *args, **kwargs)
+        env = gym.make(name, *args, **kwargs)
+        return env
 
     @property
     def compute_reward(self):
         """ Returns a reward function of an environment. """
         return self.environment.compute_reward
+
+
+@gin.configurable
+class Atari(Gym):
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
+                 **kwargs):
+        super(Atari, self).__init__(name, worker_groups, workers_per_group,
+                                    *args, **kwargs)
+        self.environment = self.create_atari_environment(self.environment,
+                                                         True)
+        print("Atari: ", self.environment)
+
+    @gin.configurable
+    def create_atari_environment(self, environment, frame_stack):
+        environment = self.make_atari(environment)
+        environment = self.wrap_deepmind(environment, frame_stack=frame_stack)
+        environment.max_episode_steps = environment.spec.max_episode_steps
+        return environment
+
+    def make_atari(self, env):
+        assert "NoFrameskip" in env.spec.id
+        return wrappers.AtariPreprocessing(env)
+
+    def wrap_deepmind(self, env, episode_life=True, clip_rewards=True,
+                      frame_stack=False, scale=False):
+        '''Configure environment for DeepMind-style Atari.
+        '''
+        if episode_life:
+            env = environments.EpisodicLifeEnv(env)
+        if "FIRE" in env.unwrapped.get_action_meanings():
+            env = environments.FireResetEnv(env)
+        if scale:
+            # This undos memory optimisation
+            env = environments.ScaledFloatFrame(env)
+        if clip_rewards:
+            env = environments.ClipRewardEnv(env)
+        if frame_stack:
+            env = environments.FrameStack(env, 4)
+
+        return env
 
 
 @gin.configurable

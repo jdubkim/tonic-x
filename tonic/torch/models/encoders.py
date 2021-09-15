@@ -27,7 +27,7 @@ class ObservationActionEncoder(torch.nn.Module):
     ):
         self.observation_normalizer = observation_normalizer
         observation_size = observation_space.shape[0]
-        action_size = helpers.action_size(action_space) 
+        action_size = helpers.action_size(action_space)
         return observation_size + action_size
 
     def forward(self, observations, actions):

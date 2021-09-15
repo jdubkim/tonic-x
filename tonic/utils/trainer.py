@@ -34,7 +34,7 @@ class Trainer:
         agent.initialize(
             observation_space=environment.observation_space,
             action_space=environment.action_space, seed=seed)
-        
+
         self.agent = agent
         self.environment = environment
         self.test_environment = test_environment

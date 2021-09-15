@@ -7,7 +7,7 @@ import gin
 import numpy as np
 
 import tonic  # noqa
-from tonic.environments import Bullet, ControlSuite, Gym
+from tonic.environments import Bullet, ControlSuite
 
 
 flags.DEFINE_multi_string(

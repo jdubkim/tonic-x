@@ -52,7 +52,7 @@ class StochasticPolicyGradient:
                 std = tf.reduce_mean(distributions.stddev())
             except NotImplementedError:
                 std = 'N/A'
-        
+
         return dict(loss=loss, kl=kl, entropy=entropy, std=std)
 
 
