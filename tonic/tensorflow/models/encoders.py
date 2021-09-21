@@ -1,5 +1,4 @@
 import gin
-import numpy as np
 import tensorflow as tf
 
 from tonic.tensorflow import models
@@ -63,7 +62,6 @@ class DictObservationActionEncoder(tf.keras.Model):
         observations.append(actions)
 
         return tf.concat(observations, axis=-1)
-
 
 
 @gin.configurable

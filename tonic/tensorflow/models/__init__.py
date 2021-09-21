@@ -21,7 +21,8 @@ from .utils import default_dense_kwargs, MLP, NATURE_CNN
 __all__ = [
     default_dense_kwargs, MLP, NATURE_CNN, ObservationActionEncoder,
     ObservationEncoder, DictObservationEncoder, DictObservationActionEncoder, 
-    CNNEncoder, SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead,
-    GaussianPolicyHead, DeterministicPolicyHead, CateogoricalPolicyHead, Actor,
+    CNNEncoder, SquashedMultivariateNormalDiag, 
+    DetachedScaleGaussianPolicyHead, GaussianPolicyHead, 
+    DeterministicPolicyHead, CateogoricalPolicyHead, Actor,
     Critic, DistributionalValueHead, ValueHead, ActorCritic,
     ActorCriticWithTargets, ActorTwinCriticWithTargets]

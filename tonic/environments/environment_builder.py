@@ -1,7 +1,6 @@
 import abc
 import gin
 import gym
-from gym import wrappers
 
 from tonic import environments
 

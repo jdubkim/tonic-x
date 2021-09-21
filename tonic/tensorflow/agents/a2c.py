@@ -15,7 +15,7 @@ def default_model():
             encoder=models.CNNEncoder(),
             torso=models.MLP((512, 256), 'relu'),
             head=models.ValueHead()),
-        observation_normalizer=normalizers.ScaledFloatFrame())#normalizers.MeanStd())
+        observation_normalizer=normalizers.ScaledFloatFrame())
 
 
 @gin.configurable
