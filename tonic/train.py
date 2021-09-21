@@ -22,7 +22,6 @@ FLAGS = flags.FLAGS
 def train(agent, environment, trainer, before_training, after_training):
     '''Trains an agent on an environment.'''
 
-    print(environment())
     # Build the train and test environments.
     environment_ = environment
     environment = environment_()
@@ -57,7 +56,6 @@ def train(agent, environment, trainer, before_training, after_training):
 
 
 def main(argv):
-
     gin_file = FLAGS.gin_file
     gin_param = FLAGS.gin_param
 

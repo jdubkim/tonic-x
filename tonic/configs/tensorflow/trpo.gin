@@ -31,5 +31,5 @@ mlp.units = (64, 64)
 mlp.activation = 'tanh'
 
 # Macros
-initialize.seed = %seed
+Trainer.initialize.seed = %seed
 Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

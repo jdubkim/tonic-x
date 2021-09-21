@@ -10,7 +10,7 @@ setuptools.setup(
     author_email='f.pardo@imperial.ac.uk',
     install_requires=[
         'gin-config', 'gym', 'matplotlib', 'numpy', 'pandas', 'pyyaml',
-        'termcolor'],
+        'termcolor', 'opencv-python'],
     extras_require={
         'tests': ['pytest', "pytest-cov", 'flake8'],
     },

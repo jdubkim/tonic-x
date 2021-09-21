@@ -29,10 +29,7 @@ class Trainer:
             environment.initialize(seed=seed)
 
         if test_environment and seed is not None:
-            print(test_environment.worker_groups)
             test_environment.initialize(seed=seed + 10000)
-            print(test_environment.distributed_environment)
-            exit()
 
         agent.initialize(
             observation_space=environment.observation_space,
@@ -137,14 +134,14 @@ class Trainer:
             score, length = 0, 0
             while True:
                 # Select an action.
-                actions = self.agent.test_step(self.test_observations)
+                actions = self.agent.step(self.test_observations)
                 assert not np.isnan(actions.sum())
                 logger.store('test/action', actions, stats=True)
 
                 # Take a step in the environment.
                 self.test_observations, infos = \
-                    self.test_environment.test_step(actions)
-                env_infos = infos.pop('environment_infos')
+                    self.test_environment.step(actions)
+                env_infos = infos.pop('env_infos')
 
                 self.agent.test_update(**infos)
 

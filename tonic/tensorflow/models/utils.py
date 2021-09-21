@@ -10,12 +10,33 @@ def default_dense_kwargs():
             scale=1 / 3, mode='fan_in', distribution='uniform'))
 
 
+def default_cnn_kwargs():
+    return dict(
+        kernel_initializer=tf.keras.initializers.VarianceScaling(
+            scale=2.),
+        use_biase=False
+    )
+
+
 @gin.configurable
 def mlp(units, activation, dense_kwargs=None):
     if dense_kwargs is None:
         dense_kwargs = default_dense_kwargs()
     layers = [tf.keras.layers.Dense(u, activation, **dense_kwargs)
               for u in units]
+    return tf.keras.Sequential(layers)
+
+    
+@gin.configurable
+def nature_cnn(units, activation, cnn_kwargs=None):
+    if cnn_kwargs is None:
+        cnn_kwargs = default_cnn_kwargs()
+    layers = [tf.keras.layers.Conv2D(filter, kernel, strides=(stride, stride),
+                                     activation=activation)
+              for (filter, kernel, stride) in units]
+    # flatten for fc layers
+    layers.append(tf.keras.layers.Flatten())
+
     return tf.keras.Sequential(layers)
 
 
@@ -41,3 +62,4 @@ def get_dummy_observations(observation_shape):
 
 
 MLP = mlp
+NATURE_CNN = nature_cnn

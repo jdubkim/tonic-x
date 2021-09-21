@@ -1,5 +1,3 @@
-import copy
-
 import abc
 import gin
 import gym
@@ -7,6 +5,7 @@ import gym
 from tonic import environments
 
 
+@gin.configurable
 class Environment(abc.ABC):
     def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
@@ -18,16 +17,15 @@ class Environment(abc.ABC):
         self.dummy_environment = self.create_environment(name, *args, **kwargs)
         self.environment = self.environment_wrapper(self.dummy_environment)
 
-        self.observation_space = self.environment.observation_space
-        self.action_space = self.environment.action_space
-
         super(Environment, self).__init__()
 
     @abc.abstractmethod
-    def create_environment(self, name, *args, **kwargs):
+    def create_environment(self, name, *arg, **kwargs):
         pass
 
     def initialize(self, seed):
+        self.observation_space = self.environment.observation_space
+        self.action_space = self.environment.action_space
         self.distributed_environment = self.distribute_environment()
         self.distributed_environment.initialize(seed)
 
@@ -37,23 +35,19 @@ class Environment(abc.ABC):
     def step(self, actions):
         return self.distributed_environment.step(actions)
 
-    def test_step(self, actions):
-        return self.distributed_environment.test_step(actions)
-
-    def render(self, mode, *args, **kwargs):
+    def render(self, mode='human', *args, **kwargs):
         return self.distributed_environment.render(mode, *args, **kwargs)
 
     @gin.configurable
     def environment_wrapper(
         self, environment, terminal_timeouts=False, time_feature=False,
-        max_episode_steps='default', scaled_actions=True
+        max_episode_steps='default', scaled_actions=False
     ):
         '''Wrap an environment.
         Time limits can be properly handled with terminal_timeouts=False or
         time_feature=True, see https://arxiv.org/pdf/1712.00378.pdf for more
         details.
         '''
-
         # Get the default time limit.
         if max_episode_steps == 'default':
             max_episode_steps = environment._max_episode_steps
@@ -79,9 +73,7 @@ class Environment(abc.ABC):
     @gin.configurable
     def distribute_environment(self):
         '''Distributes workers over parallel and sequential groups.'''
-        dummy_environment = copy.deepcopy(self.environment)
-        max_episode_steps = dummy_environment.max_episode_steps
-        del dummy_environment
+        max_episode_steps = self.environment.max_episode_steps
 
         if self.worker_groups < 2:
             return environments.Sequential(
@@ -96,13 +88,14 @@ class Environment(abc.ABC):
 
 @gin.configurable
 class Gym(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
         super(Gym, self).__init__(name, worker_groups, workers_per_group,
                                   *args, **kwargs)
 
     def create_environment(self, name, *args, **kwargs):
-        return gym.make(name, *args, **kwargs)
+        env = gym.make(name, *args, **kwargs)
+        return env
 
     @property
     def compute_reward(self):
@@ -111,8 +104,55 @@ class Gym(Environment):
 
 
 @gin.configurable
+class Atari(Gym):
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
+                 **kwargs):
+        super(Atari, self).__init__(name, worker_groups, workers_per_group,
+                                    *args, **kwargs)
+        self.environment = self.create_atari_environment(self.environment,
+                                                         True)
+
+    @gin.configurable
+    def create_atari_environment(self, environment, noop_max=30, frameskip=4,
+                                 screen_size=84, episodic_life=True,
+                                 clip_rewards=True, frame_stack=True, 
+                                 scale=False):
+        environment = self.make_atari(environment, noop_max, frameskip)
+        environment = self.wrap_deepmind(
+            environment, screen_size, episodic_life, clip_rewards, 
+            frame_stack, scale)
+        environment.max_episode_steps = environment.spec.max_episode_steps
+        return environment
+
+    def make_atari(self, environment, noop_max, frameskip):
+        assert "NoFrameskip" in environment.spec.id
+        environment = environments.NoopResetEnv(environment, noop_max=noop_max)
+        environment = environments.MaxAndSkipEnv(environment, skip=frameskip)
+        return environment
+
+    def wrap_deepmind(self, env, screen_size, episode_life, clip_rewards,
+                      frame_stack, scale):
+        '''Configure environment for DeepMind-style Atari.
+        '''
+        if episode_life:
+            env = environments.EpisodicLifeEnv(env)
+        if "FIRE" in env.unwrapped.get_action_meanings():
+            env = environments.FireResetEnv(env)
+        env = environments.WarpFrame(env, screen_size, screen_size)
+        if scale:
+            # This undos memory optimisation
+            env = environments.ScaledFloatFrame(env)
+        if clip_rewards:
+            env = environments.ClipRewardEnv(env)
+        if frame_stack:
+            env = environments.FrameStack(env, 4)
+
+        return env
+
+
+@gin.configurable
 class Bullet(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
         super(Bullet, self).__init__(name, worker_groups, workers_per_group,
                                      *args, **kwargs)
@@ -124,7 +164,7 @@ class Bullet(Environment):
 
 @gin.configurable
 class ControlSuite(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
         super(Bullet, self).__init__(name, worker_groups, workers_per_group,
                                      *args, **kwargs)
@@ -138,7 +178,7 @@ class ControlSuite(Environment):
 
 @gin.configurable
 class SimpleEnv(Environment):
-    def __init__(self, name, worker_groups=1, workers_per_group=1, *args,
+    def __init__(self, name=None, worker_groups=1, workers_per_group=1, *args,
                  **kwargs):
         super(SimpleEnv, self).__init__(name, worker_groups, workers_per_group,
                                         *args, **kwargs)

@@ -29,5 +29,5 @@ MLP.sizes = (256, 256)
 MLP.activation = 'relu'
 
 # Macros
-initialize.seed = %seed
+Trainer.initialize.seed = %seed
 Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

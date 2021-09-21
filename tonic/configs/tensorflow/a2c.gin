@@ -7,6 +7,9 @@ AGENT = @A2C()
 ENVIRONMENT = @Bullet
 Bullet.name = %environment_name
 environment_name = 'AntBulletEnv-v0'
+Bullet.worker_groups = %parallel
+Bullet.workers_per_group = %sequential
+environment_wrapper.scaled_actions = False
 
 trainer = @Trainer()
 NAME = None
@@ -28,8 +31,8 @@ tf.keras.optimizers.Adam.lr = 1e-3
 tf.keras.optimizers.Adam.epsilon = 1e-8
 
 mlp.units = (64, 64)
-mlp.activation = 'tanh'
+mlp.activation = 'relu'
 
 # Macros
-initialize.seed = %seed
+Trainer.initialize.seed = %seed
 Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

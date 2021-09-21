@@ -28,5 +28,5 @@ MLP.sizes = (64, 64)
 MLP.activation = 'tanh'
 
 # Macros
-initialize.seed = %seed
+Trainer.initialize.seed = %seed
 Logger.path = [%environment_name, %AGENT, %NAME, %seed, %sequential, %parallel]

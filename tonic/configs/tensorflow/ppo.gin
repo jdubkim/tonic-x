@@ -7,10 +7,10 @@ AGENT = @PPO()
 ENVIRONMENT = @Gym
 Gym.name = %environment_name
 environment_name = 'MountainCar-v0'
+environment_wrapper.scaled_actions = False
 
 Gym.worker_groups = %parallel
 Gym.workers_per_group = %sequential
-environment_wrapper.scaled_actions = False
 
 trainer = @Trainer()
 NAME = None

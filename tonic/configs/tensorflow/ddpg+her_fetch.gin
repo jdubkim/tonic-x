@@ -7,6 +7,8 @@ AGENT = @DDPG()
 ENVIRONMENT = @Gym
 Gym.name = %environment_name
 environment_name = 'FetchPush-v1'
+Gym.worker_groups = %parallel
+Gym.workers_per_group = %sequential
 
 trainer = @Trainer()
 NAME = 'DDPG+HER'

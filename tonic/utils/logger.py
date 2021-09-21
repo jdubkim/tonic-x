@@ -90,7 +90,11 @@ class Logger:
                 self.epoch_dict[key + '/size'] = len(values)
                 del self.epoch_dict[key]
             else:
-                self.epoch_dict[key] = np.mean(values)
+                # Case for N/A
+                if isinstance(values[0], bytes):
+                    self.epoch_dict[key] = str(values[0], 'utf-8')
+                else:
+                    self.epoch_dict[key] = np.mean(values)
 
         # Check if new keys were added.
         new_keys = [key for key in self.epoch_dict.keys()
