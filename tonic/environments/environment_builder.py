@@ -18,16 +18,15 @@ class Environment(abc.ABC):
         self.dummy_environment = self.create_environment(name, *args, **kwargs)
         self.environment = self.environment_wrapper(self.dummy_environment)
 
-        self.observation_space = self.environment.observation_space
-        self.action_space = self.environment.action_space
-
         super(Environment, self).__init__()
 
     @abc.abstractmethod
-    def create_environment(self, name, *args, **kwargs):
+    def create_environment(self, name, *arg, **kwargs):
         pass
 
     def initialize(self, seed):
+        self.observation_space = self.environment.observation_space
+        self.action_space = self.environment.action_space
         self.distributed_environment = self.distribute_environment()
         self.distributed_environment.initialize(seed)
 
@@ -43,7 +42,7 @@ class Environment(abc.ABC):
     @gin.configurable
     def environment_wrapper(
         self, environment, terminal_timeouts=False, time_feature=False,
-        max_episode_steps='default', scaled_actions=True
+        max_episode_steps='default', scaled_actions=False
     ):
         '''Wrap an environment.
         Time limits can be properly handled with terminal_timeouts=False or
@@ -113,27 +112,34 @@ class Atari(Gym):
                                     *args, **kwargs)
         self.environment = self.create_atari_environment(self.environment,
                                                          True)
-        print("Atari: ", self.environment)
 
     @gin.configurable
-    def create_atari_environment(self, environment, frame_stack):
-        environment = self.make_atari(environment)
-        environment = self.wrap_deepmind(environment, frame_stack=frame_stack)
+    def create_atari_environment(self, environment, noop_max=30, frameskip=4,
+                                 screen_size=84, episodic_life=True,
+                                 clip_rewards=True, frame_stack=True, 
+                                 scale=False):
+        environment = self.make_atari(environment, noop_max, frameskip)
+        environment = self.wrap_deepmind(
+            environment, screen_size, episodic_life, clip_rewards, 
+            frame_stack, scale)
         environment.max_episode_steps = environment.spec.max_episode_steps
         return environment
 
-    def make_atari(self, env):
-        assert "NoFrameskip" in env.spec.id
-        return wrappers.AtariPreprocessing(env)
+    def make_atari(self, environment, noop_max, frameskip):
+        assert "NoFrameskip" in environment.spec.id
+        environment = environments.NoopResetEnv(environment, noop_max=noop_max)
+        environment = environments.MaxAndSkipEnv(environment, skip=frameskip)
+        return environment
 
-    def wrap_deepmind(self, env, episode_life=True, clip_rewards=True,
-                      frame_stack=False, scale=False):
+    def wrap_deepmind(self, env, screen_size, episode_life, clip_rewards,
+                      frame_stack, scale):
         '''Configure environment for DeepMind-style Atari.
         '''
         if episode_life:
             env = environments.EpisodicLifeEnv(env)
         if "FIRE" in env.unwrapped.get_action_meanings():
             env = environments.FireResetEnv(env)
+        env = environments.WarpFrame(env, screen_size, screen_size)
         if scale:
             # This undos memory optimisation
             env = environments.ScaledFloatFrame(env)

@@ -56,7 +56,6 @@ def train(agent, environment, trainer, before_training, after_training):
 
 
 def main(argv):
-
     gin_file = FLAGS.gin_file
     gin_param = FLAGS.gin_param
 

@@ -19,14 +19,15 @@ class ActorCritic(tf.keras.Model):
         self.return_normalizer = return_normalizer
 
     def initialize(self, observation_space, action_space):
+        obs_shape = get_observation_space(observation_space)
         if self.observation_normalizer:
-            self.observation_normalizer.initialize(observation_space.shape)
+            self.observation_normalizer.initialize(obs_shape)
         self.actor.initialize(
             observation_space, action_space, self.observation_normalizer)
         self.critic.initialize(
             observation_space, action_space, self.observation_normalizer,
             self.return_normalizer)
-        dummy_observations = tf.zeros((1,) + observation_space.shape)
+        dummy_observations = get_dummy_observations(obs_shape)
         self.actor(dummy_observations)
         self.critic(dummy_observations)
 

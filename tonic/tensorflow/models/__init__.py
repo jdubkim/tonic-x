@@ -13,15 +13,15 @@ from .actors import CateogoricalPolicyHead
 from .critics import Critic, DistributionalValueHead, ValueHead
 
 from .encoders import ObservationActionEncoder, ObservationEncoder, \
-    DictObservationEncoder, DictObservationActionEncoder
+    DictObservationEncoder, DictObservationActionEncoder, CNNEncoder
 
-from .utils import default_dense_kwargs, MLP
+from .utils import default_dense_kwargs, MLP, NATURE_CNN
 
 
 __all__ = [
-    default_dense_kwargs, MLP, ObservationActionEncoder,
-    ObservationEncoder, DictObservationEncoder, DictObservationActionEncoder,
-    SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead,
+    default_dense_kwargs, MLP, NATURE_CNN, ObservationActionEncoder,
+    ObservationEncoder, DictObservationEncoder, DictObservationActionEncoder, 
+    CNNEncoder, SquashedMultivariateNormalDiag, DetachedScaleGaussianPolicyHead,
     GaussianPolicyHead, DeterministicPolicyHead, CateogoricalPolicyHead, Actor,
     Critic, DistributionalValueHead, ValueHead, ActorCritic,
     ActorCriticWithTargets, ActorTwinCriticWithTargets]

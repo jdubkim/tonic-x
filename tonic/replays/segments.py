@@ -33,6 +33,7 @@ class Segment:
             for key, val in kwargs.items():
                 shape = (self.max_size,) + np.array(val).shape
                 self.buffers[key] = np.zeros(shape, np.float32)
+                
         for key, val in kwargs.items():
             self.buffers[key][self.index] = val
         self.index += 1
