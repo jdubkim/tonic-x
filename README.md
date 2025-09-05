@@ -1,3 +1,24 @@
+# Tonic-x
+
+Extension of Tonic RL library, which was done as part of UROP 2021.
+
+## My Contributions
+This fork includes several extensions to the original Tonic reinforcement learning library:
+
+- **Hindsight Experience Replay (HER)**: Implemented HER buffer with optimized storage for goal-conditioned reinforcement learning, including support for dictionary observations and integration with PyTorch normalizers.
+
+- **Atari Environment Support**: Added CNN modules and environment wrappers for Atari games, along with categorical policy heads for discrete action spaces.
+
+- **Dictionary Observations**: Extended the framework to handle complex, multi-modal observations through dictionary-based buffers and normalizers, with updates to the distributed training pipeline.
+
+- **Configuration Management**: Integrated Google's Gin configuration system throughout the codebase, allowing for flexible hyperparameter management and experimental setup.
+
+- **Development Infrastructure**: Set up CI/CD pipelines, automated testing, and code quality tools to ensure reliable development workflow.
+
+The implementation focuses on goal-conditioned RL scenarios and discrete action environments, extending Tonic's original continuous control capabilities.
+
+---------------------------
+
 # Tonic
 
 <div align="center">
